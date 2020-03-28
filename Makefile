@@ -19,16 +19,16 @@ build:
 ### Clean
 clean: clean-dist clean-test
 	rm -rf ./build
-	find -type d -name __pycache__ | xargs rm -rf
+	find -type d -name __pycache__ | xargs -r rm -rf
 	rm -rf Mop.egg-info
 
 clean-dist:
 	rm -rf ./dist
-	find . -type f -name '*~' | xargs rm
+	find . -type f -name '*~' | xargs -r rm
 
 clean-test:
 	rm -rf .tox
-	rm .coverage
+	-rm .coverage
 
 
 ### Develop
