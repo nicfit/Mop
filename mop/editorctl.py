@@ -278,17 +278,21 @@ class GenreEditorWidget(ComboBoxEditorWidget):
     def init(self, tag):
         with self._onChangeInactive():
             if tag.genre is None:
+                # No genre
                 self.widget.set_active_id("-1")
-                return
-
-            if tag.genre.id is not None:
+            elif tag.genre.id is not None:
+                # Standard genre
                 self.widget.set_active_id(str(tag.genre.id))
-                return
+            else:
+                # Custom (non-std) genre
+                try:
+                    gid = str(GENRES.get(tag.genre.name).id)
+                except KeyError:
+                    genre = GENRES.add(tag.genre.name)
+                    gid = str(genre.id)
+                    self.widget.append(gid, genre.name)
 
-            genre = GENRES.add(tag.genre.name)
-            gid = str(genre.id)
-            self.widget.append(gid, genre.name)
-            self.widget.set_active_id(gid)
+                self.widget.set_active_id(gid)
 
     def set(self, tag, genre: Genre) -> bool:
         if (tag.genre or None) != (genre or None):
