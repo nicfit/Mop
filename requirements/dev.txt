@@ -1,0 +1,4 @@
+Parcyl
+PyGObject-stubs
+tox
+twine

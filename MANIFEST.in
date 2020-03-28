@@ -1,0 +1,9 @@
+include README
+include AUTHORS.rst
+include HISTORY.rst
+include Makefile
+include tox.ini
+include parcyl.py
+include mop/*.ui
+
+recursive-include requirements *.txt
