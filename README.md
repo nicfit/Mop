@@ -1,2 +1,2 @@
 # Mop
-GTK+ IDE tag editor
+GTK+ ID3 tag editor
