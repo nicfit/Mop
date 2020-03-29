@@ -40,9 +40,12 @@ class MopApp:
             Gtk.main()
         except KeyboardInterrupt:
             pass
+        except FileNotFoundError as ex:
+            log.error(ex)
+            return 1
         except Exception as ex:
             log.exception("Error:", ex)
-            return 1
+            return 2
 
     def quit(self, *_):
         if self._main_window.shutdown():
@@ -97,9 +100,7 @@ class MopWindow:
             # Not using show_all here since some widgets may have hidden
             self._window.show()
         else:
-            # TODO:  Dialog
-            print("Nothing to do.")
-            #MopApp.quit(None)
+            raise FileNotFoundError("Nothing to do")
 
     @property
     def window(self):
