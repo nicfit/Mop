@@ -31,7 +31,6 @@ class FileSaveDialog(Dialog):
         else:
             active_version = versionToString(pref_version).replace(".", "")
 
-        print("V:", pref_version, active_version)
         self._builder.get_object(f"{active_version}_radiobutton").set_active(True)
 
     def run(self):

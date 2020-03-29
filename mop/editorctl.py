@@ -3,6 +3,7 @@ from functools import partial
 from contextlib import contextmanager
 from eyed3 import id3, core
 from eyed3.id3 import ID3_V1_0, ID3_V1_1, ID3_V2_3, ID3_V2_4, Genre
+from eyed3.id3.tag import ID3_V1_MAX_TEXTLEN, ID3_V1_COMMENT_DESC
 from gi.repository import GObject, Gtk, Gdk
 
 from .core import GENRES
@@ -30,6 +31,7 @@ class EditorWidget(GObject.GObject):
 
         self.widget = widget
         self._connect()
+        self._default_tooltip = self.widget.get_tooltip_text()
 
     def init(self, tag):
         raise NotImplementedError()
@@ -93,9 +95,20 @@ class EditorWidget(GObject.GObject):
         finally:
             self._on_change_active = True
 
+    def _setSensitive(self, state, tooltip_text):
+        self.widget.set_sensitive(state)
+        self.widget.set_tooltip_text(tooltip_text)
+
 
 class EntryEditorWidget(EditorWidget):
+
     def init(self, tag):
+        if tag.isV1():
+            # ID3 v1 length limits
+            self.widget.set_max_length(ID3_V1_MAX_TEXTLEN)
+        else:
+            self.widget.set_max_length(0)
+
         with self._onChangeInactive():
             if tag:
                 getter, _ = self._getAccessors(tag)
@@ -115,6 +128,16 @@ class EntryEditorWidget(EditorWidget):
 class SimpleAccessorEditorWidgetABC(EntryEditorWidget):
 
     def init(self, tag):
+        if tag.isV1():
+            # ID3 v1 length limits
+            limit = ID3_V1_MAX_TEXTLEN
+            if tag.isV1():
+                # v1.1 stores uses last two bytes of comment to store track
+                limit -= 2
+            self.widget.set_max_length(limit)
+        else:
+            self.widget.set_max_length(0)
+
         with self._onChangeInactive():
             if tag:
                 getter, _ = self._getAccessors(tag)
@@ -125,24 +148,39 @@ class SimpleAccessorEditorWidgetABC(EntryEditorWidget):
 
 
 class SimpleCommentEditorWidget(SimpleAccessorEditorWidgetABC):
+    def init(self, tag):
+        retval = super().init(tag)
+
+        if tag.isV1():
+            # ID3 v1 length limits
+            limit = ID3_V1_MAX_TEXTLEN
+            if tag.version[1] == 1:
+                # v1.1 stores uses last two bytes of comment to store track
+                limit -= 2
+            self.widget.set_max_length(limit)
+        else:
+            self.widget.set_max_length(0)
+
+        return retval
+
     def _getAccessors(self, tag, prop=None):
-        descr = ""
+        desc = "" if tag.isV2() else ID3_V1_COMMENT_DESC
         lang = id3.DEFAULT_LANG
 
         def setter(val):
-            tag.comments.set(val, descr, lang=lang)
+            tag.comments.set(val, desc, lang=lang)
 
-        return partial(tag.comments.get, descr, lang=lang), setter
+        return partial(tag.comments.get, desc, lang=lang), setter
 
 
 class SimpleUrlEditorWidget(SimpleAccessorEditorWidgetABC):
     def _getAccessors(self, tag, prop=None):
-        descr = ""
+        desc = ""
 
         def setter(val):
-            tag.user_url_frames.set(val, descr)
+            tag.user_url_frames.set(val, desc)
 
-        return partial(tag.user_url_frames.get, descr), setter
+        return partial(tag.user_url_frames.get, desc), setter
 
     def init(self, tag):
         with self._onChangeInactive():
@@ -186,6 +224,20 @@ class NumTotalEditorWidget(EntryEditorWidget):
             super()._onDeepCopy(entry, icon_pos, button)
 
     def init(self, tag):
+        major, minor = tag.version[:2]
+        if self._name.startswith("tag_track_") and major == 1:
+            if self._name.startswith("tag_track_num") and minor == 0:
+                self._setSensitive(False, "Track number requires ID3 v1.1")
+            else:
+                self._setSensitive(False, "Track total requires ID3 v2.x")
+            return
+        elif self._name.startswith("tag_disc_") and tag.isV1():
+            # No disc number support for ID3 v1
+            self._setSensitive(False, "Disc number requires ID3 v2.x")
+            return
+        else:
+            self._setSensitive(True, self._default_tooltip)
+
         with self._onChangeInactive():
             if not tag:
                 self.widget.set_text("")
@@ -200,6 +252,22 @@ class DateEditorWidget(EntryEditorWidget):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._default_fg = self.widget.get_style().fg
+
+    def init(self, tag):
+        retval = super().init(tag)
+
+        if tag.version < ID3_V2_4 and self._name == "tag_original_release_date_entry":
+            # Release date is only supported in ID3 2.4
+            self._setSensitive(False, "Original release date requires ID3 v2.4")
+        elif tag.isV1() and self._name == "tag_recording_date_entry":
+            # Recording date is only supported in ID3 2
+            self._setSensitive(False, "Recording date requires ID3 v2.x")
+        else:
+            # ID3 v1 is only a year
+            self.widget.set_max_length(4 if tag.isV1() else 0)
+            self._setSensitive(True, self._default_tooltip)
+
+        return retval
 
     def set(self, tag, value) -> bool:
         getter, setter = self._getAccessors(tag)
@@ -244,6 +312,12 @@ class AlbumTypeEditorWidget(ComboBoxEditorWidget):
                     self.widget.set_active(i)
                     break
 
+        # User text frames are ID3 v2 only
+        if tag.isV1():
+            self._setSensitive(False, "Album type requires ID3 v2.x")
+        else:
+            self._setSensitive(True, self._default_tooltip)
+
     def set(self, tag, value) -> bool:
         value = value.lower()
         if (tag.album_type or None) != (value or None):
@@ -276,6 +350,8 @@ class GenreEditorWidget(ComboBoxEditorWidget):
         self._on_change_active = True
 
     def init(self, tag):
+        # TODO: ID32 v1: only show standard genres and disallow text entry of custom
+
         with self._onChangeInactive():
             if tag.genre is None:
                 # No genre
@@ -318,7 +394,8 @@ class GenreEditorWidget(ComboBoxEditorWidget):
                 self.emit("tag-changed")
 
 
-class TagVersionEditorWidget(EditorWidget):
+class TagVersionChoiceWidget(EditorWidget):
+    # FIXME: Change to a choice for showing one of the two tags that may be in file.
 
     def __init__(self, *args):
         super().__init__(*args)
@@ -352,8 +429,12 @@ class TagVersionEditorWidget(EditorWidget):
 
     def _onChanged(self, widget):
         version_id = self.widget.get_active_id()
+        print("CHANGED:", version_id)
         if not version_id:
             return
+
+        # FIXME
+        # return
 
         if self._editor_ctl.current_edit:
             tag = self._editor_ctl.current_edit.tag
@@ -380,10 +461,9 @@ class EditorControl(GObject.GObject):
         self._file_list_ctl = file_list_ctl
         self._current_audio_file = None
 
-        notebook = builder.get_object("editor_notebook")
+        self._notebook = builder.get_object("editor_notebook")
         # XXX: Disable WIP notebook tabs
-        #notebook.get_nth_page(self.EXTRAS_PAGE).hide()
-        notebook.get_nth_page(self.IMAGES_PAGE).hide()
+        self._notebook.get_nth_page(self.IMAGES_PAGE).hide()
 
         self._editor_widgets = {}
         for widget_name in (
@@ -419,11 +499,7 @@ class EditorControl(GObject.GObject):
                 )
 
             elif widget_name == "tag_version_combo":
-                editor_widget = TagVersionEditorWidget(
-                    widget_name, widget,
-                    #builder.get_object("current_edit_tag_album_type_deepcopy"),
-                    self
-                )
+                editor_widget = TagVersionChoiceWidget(widget_name, widget, self)
 
             elif widget_name in ("tag_track_num_entry", "tag_track_total_entry",
                                  "tag_disc_num_entry", "tag_disc_total_entry"):
@@ -484,8 +560,13 @@ class EditorControl(GObject.GObject):
 
     def edit(self, audio_file):
         self._current_audio_file = audio_file
-
         tag = audio_file.tag if audio_file else None
+
+        if tag and tag.isV1():
+            # ID3 v1 supports no Extras
+            self._notebook.get_nth_page(self.EXTRAS_PAGE).hide()
+        else:
+            self._notebook.get_nth_page(self.EXTRAS_PAGE).show()
 
         for widget in self._editor_widgets.values():
             try:
