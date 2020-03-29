@@ -1,2 +1,2 @@
-eyeD3>=0.9.4
+eyeD3>=0.9.5
 PyGObject
