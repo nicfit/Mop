@@ -1,6 +1,7 @@
-from eyed3.id3 import ID3_V1_0, ID3_V1_1, ID3_V2_3, ID3_V2_4
+from eyed3.id3 import ID3_V1_0, ID3_V1_1, ID3_V2_3, ID3_V2_4, ID3_ANY_VERSION, versionToString
 from pathlib import Path
 from gi.repository import Gtk
+from .config import getConfig
 
 
 class Dialog:
@@ -21,9 +22,17 @@ class Dialog:
 
 
 class FileSaveDialog(Dialog):
-    def __init__(self, active_version="Current"):
+    def __init__(self):
         super().__init__("file_save_dialog")
-        self._builder.get_object(f"v{active_version}_radiobutton").set_active(True)
+
+        pref_version = getConfig().preferred_id3_version or ID3_ANY_VERSION
+        if pref_version == ID3_ANY_VERSION:
+            active_version = "vCurrent"
+        else:
+            active_version = versionToString(pref_version).replace(".", "")
+
+        print("V:", pref_version, active_version)
+        self._builder.get_object(f"{active_version}_radiobutton").set_active(True)
 
     def run(self):
         resp = super().run()
