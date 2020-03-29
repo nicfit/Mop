@@ -5,6 +5,7 @@ from gi.repository import Gtk
 
 from eyed3.utils import formatTime, formatSize
 
+from .config import getState
 from .utils import eyed3_load, eyed3_load_dir
 from .dialogs import Dialog, FileSaveDialog
 from .editorctl import EditorControl
@@ -49,11 +50,19 @@ class MopApp:
 
     def quit(self, *_):
         if self._main_window.shutdown():
+            self._updateState()
             self._is_shut_down = True
             Gtk.main_quit()
         else:
             # Not quitting
+            log.warning("Quit request rejected")
             return True
+
+    def _updateState(self):
+        app_state = getState()
+        app_state.main_window_size = self._main_window.window.get_size()
+        app_state.main_window_position = self._main_window.window.get_position()
+        app_state.save()
 
 
 class MopWindow:
@@ -95,6 +104,13 @@ class MopWindow:
                             audio_files.append(af)
 
             self._file_list_control.setFiles(audio_files)
+
+        # Restore last window size and position
+        app_state = getState()
+        if None not in app_state.main_window_position:
+            self.window.move(*app_state.main_window_position)
+        if None not in app_state.main_window_size:
+            self.window.resize(*app_state.main_window_size)
 
         if self._file_list_control.current_audio_file:
             # Not using show_all here since some widgets may have hidden

@@ -1,14 +1,17 @@
 import os
 import sys
+import json
 import textwrap
 import importlib
 from pathlib import Path
 
-__all__ = ["CONFIG_DIR", "Config", "getConfig"]
+__all__ = ["CONFIG_DIR", "Config", "getConfig", "getState"]
 
-# Global config
-_config = None
 CONFIG_DIR = Path("~/.config/Mop/").expanduser()
+CACHE_DIR = Path("~/.cache/Mop/").expanduser()
+# Global config and state
+_config = None
+_state = None
 
 
 class _ConfigFile:
@@ -82,3 +85,58 @@ def getConfig() -> Config:
     if _config is None:
         _config = Config()
     return _config
+
+
+class State:
+    DEFAULT_PATH = CACHE_DIR / "mop.json"
+    MAIN_WINDOW = "main_window"
+
+    def __init__(self):
+        self._state_file = _ConfigFile(self.DEFAULT_PATH, default="{}", mode=0o600)
+        self._state = json.load(self._state_file.open())
+
+    def save(self):
+        self._state_file.write_text(json.dumps(self._state), "utf8")
+
+    @property
+    def main_window_size(self) -> tuple:
+        return self._getMainWindowTuple(("width", "height"))
+
+    @main_window_size.setter
+    def main_window_size(self, size: tuple) -> None:
+        self._setMainWindowTuple(("width", "height"), size)
+
+    @property
+    def main_window_position(self) -> tuple:
+        return self._getMainWindowTuple(("x", "y"))
+
+    @main_window_position.setter
+    def main_window_position(self, pos: tuple) -> None:
+        self._setMainWindowTuple(("x", "y"), pos)
+
+    def _getMainWindowTuple(self, what: tuple) -> tuple:
+        if self.MAIN_WINDOW not in self._state:
+            self._state[self.MAIN_WINDOW] = {}
+
+        return (self._state[self.MAIN_WINDOW].get(what[0], None),
+                self._state[self.MAIN_WINDOW].get(what[1], None))
+
+    def _setMainWindowTuple(self, what: tuple, value: tuple) -> None:
+        if self.MAIN_WINDOW not in self._state:
+            self._state[self.MAIN_WINDOW] = {}
+
+        for i in (0, 1):
+            if value[i] is None and what[i] in self._state[self.MAIN_WINDOW]:
+                del self._state[self.MAIN_WINDOW][what[i]]
+            else:
+                self._state[self.MAIN_WINDOW][what[i]] = value[i]
+
+
+def getState() -> State:
+    """Get application state instance"""
+    global _state
+
+    if _state is None:
+        _state = State()
+    return _state
+
