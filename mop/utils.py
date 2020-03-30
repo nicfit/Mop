@@ -10,10 +10,19 @@ log = logging.getLogger(__name__)
 
 
 def eyed3_load(path) -> Optional[AudioFile]:
-    audio_file = eyed3.load(path)
+    """Wrapper for eyed3.load.
+    Adds the following members to AudioFile:
+    - is_dirty
+    - second_v1_tag
+    - selected_tag
+    """
 
+    audio_file = eyed3.load(path)
     if audio_file and audio_file.info:
         log.debug(f"Handle audio file: {audio_file}")
+        audio_file.second_v1_tag = None
+        audio_file.selected_tag = None
+
         if audio_file.tag is None:
             audio_file.initTag()
         elif audio_file.tag.isV2():
@@ -21,10 +30,12 @@ def eyed3_load(path) -> Optional[AudioFile]:
             v1_audio_file = eyed3.load(path, tag_version=ID3_V1)
             if v1_audio_file.tag:
                 log.debug("Found extra v1 tag")
-                ...
+                audio_file.second_v1_tag = v1_audio_file.tag
+                audio_file.second_v1_tag.is_dirty = False
 
         # Add flag for tracking edits
         audio_file.tag.is_dirty = False
+
         return audio_file
     else:
         log.debug(f"Handle file: {path}")

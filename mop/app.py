@@ -131,33 +131,38 @@ class MopWindow:
         }
 
     def _onFileSaveAll(self, _):
-        files = list(self._file_list_control.dirty_files)
-        if not files:
+        if not self._file_list_control.is_dirty:
             log.debug("Files not dirty, nothing to save")
             return
+
+        files = list(self._file_list_control.dirty_files)
 
         resp, opts = FileSaveDialog().run()
         if resp == Gtk.ResponseType.OK:
             for audio_file in files:
-                self._saveTag(audio_file, opts["version"])
+                for tag in (audio_file.tag, audio_file.second_v1_tag):
+                    if tag and tag.is_dirty:
+                        self._saveTag(audio_file, tag, opts["version"])
 
-    # TODO: right click menu save file
-    def _onFileSave(self, _):
-        current = self._file_list_control.current_audio_file
-        if not current.tag.is_dirty:
-            log.debug("File not dirty")
-            return
+    def _saveTag(self, audio_file, tag, id3_version):
+        assert tag
+        assert tag.is_dirty
+        main_tag = audio_file.tag
+        try:
+            log.debug(f"Saving tag {audio_file.path}, {id3_version=}")
+            audio_file.tag = tag
+            if id3_version and id3_version[0] == 1 and tag.isV1():
+                audio_file.tag.save(version=id3_version)
+            elif id3_version and id3_version[0] == 2 and tag.isV2():
+                audio_file.tag.save(version=id3_version)
+            else:
+                audio_file.tag.save()
 
-        resp, opts = FileSaveDialog().run()
-        if resp == Gtk.ResponseType.OK:
-            self._saveTag(current, opts["version"])
+            audio_file.tag.is_dirty = False
+        finally:
+            audio_file.tag = main_tag
 
-    def _saveTag(self, audio_file, id3_version):
-        assert audio_file.tag.is_dirty
-        log.debug(f"Saving tag {audio_file.path}, {id3_version=}")
-        audio_file.tag.save(version=id3_version)
-
-        audio_file.tag.is_dirty = False
+        self._editor_control.edit(audio_file)
         self._file_list_control.list_store.updateRow(audio_file)
 
     def _onDirectoryOpen(self, _):
@@ -207,7 +212,7 @@ class MopWindow:
 
             if resp in (Gtk.ResponseType.OK, Gtk.ResponseType.CLOSE):
                 if resp == Gtk.ResponseType.OK:
-                    self._onFileSave(None)
+                    self._onFileSaveAll(None)
             elif resp == Gtk.ResponseType.CANCEL:
                 # Cancel the shutdown
                 return False

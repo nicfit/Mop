@@ -47,13 +47,14 @@ class AudioFileListStore:
             n, t = tag.track_num
             return f"{n or ''}{'/' if t else ''}{t or ''}"
 
+        dirty = (audio_file.tag and audio_file.tag.is_dirty) or \
+                (audio_file.second_v1_tag and audio_file.second_v1_tag.is_dirty)
         return [path.stem,
                 track_num(audio_file.tag) if audio_file.tag else None,
                 audio_file.tag.title if audio_file.tag else None,
                 audio_file.tag.artist if audio_file.tag else None,
                 audio_file.tag.album if audio_file.tag else None,
-                Pango.Weight.BOOK
-                    if audio_file.tag and not audio_file.tag.is_dirty else Pango.Weight.BOLD
+                Pango.Weight.BOOK if not dirty else Pango.Weight.BOLD
                 ]
 
     def updateRow(self, audio_file):
@@ -138,16 +139,16 @@ class FileListControl(GObject.GObject):
 
     @property
     def is_dirty(self):
-        for f in self.dirty_files:
-            if f.tag.is_dirty:
-                return True
+        for _ in self.dirty_files:
+            return True
         return False
 
     @property
     def dirty_files(self):
         curr_files = self.list_store._audio_files.values() \
                         if self.list_store._audio_files is not None else []
-        return [af for af in curr_files if af.tag.is_dirty]
+        return [af for af in curr_files if af.tag.is_dirty or (af.second_v1_tag and
+                                                               af.second_v1_tag.is_dirty)]
 
     def setFiles(self, audio_files: list):
         self.total_size_bytes, self.total_time_secs = 0, 0

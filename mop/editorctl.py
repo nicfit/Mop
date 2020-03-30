@@ -78,8 +78,9 @@ class EditorWidget(GObject.GObject):
 
     def _onChanged(self, widget):
         if self._on_change_active and self._editor_ctl.current_edit:
-            tag = self._editor_ctl.current_edit.tag
+            tag = self._editor_ctl.current_edit.selected_tag
             if self.set(tag, widget.get_text()):
+                log.debug("Setting tag_dirty4")
                 tag.is_dirty = True
                 self.emit("tag-changed")
 
@@ -88,7 +89,7 @@ class EditorWidget(GObject.GObject):
 
     @contextmanager
     def _onChangeInactive(self):
-        """Context manager for deactiving on-change events."""
+        """Context manager for deactivating on-change events."""
         self._on_change_active = False
         try:
             yield None
@@ -103,13 +104,13 @@ class EditorWidget(GObject.GObject):
 class EntryEditorWidget(EditorWidget):
 
     def init(self, tag):
-        if tag.isV1():
-            # ID3 v1 length limits
-            self.widget.set_max_length(ID3_V1_MAX_TEXTLEN)
-        else:
-            self.widget.set_max_length(0)
-
         with self._onChangeInactive():
+            if tag.isV1():
+                # ID3 v1 length limits
+                self.widget.set_max_length(ID3_V1_MAX_TEXTLEN)
+            else:
+                self.widget.set_max_length(0)
+
             if tag:
                 getter, _ = self._getAccessors(tag)
                 curr_val = getter()
@@ -226,15 +227,16 @@ class NumTotalEditorWidget(EntryEditorWidget):
     def init(self, tag):
         major, minor = tag.version[:2]
         if self._name.startswith("tag_track_") and major == 1:
-            if self._name.startswith("tag_track_num") and minor == 0:
-                self._setSensitive(False, "Track number requires ID3 v1.1")
+            if self._name.startswith("tag_track_num"):
+                self._setSensitive(
+                    minor != 0,
+                    self._default_tooltip if minor != 0 else "Track number requires ID3 v1.1"
+                )
             else:
                 self._setSensitive(False, "Track total requires ID3 v2.x")
-            return
         elif self._name.startswith("tag_disc_") and tag.isV1():
             # No disc number support for ID3 v1
             self._setSensitive(False, "Disc number requires ID3 v2.x")
-            return
         else:
             self._setSensitive(True, self._default_tooltip)
 
@@ -325,29 +327,29 @@ class AlbumTypeEditorWidget(ComboBoxEditorWidget):
             return True
 
     def _onChanged(self, widget):
-        if self._editor_ctl.current_edit:
-            tag = self._editor_ctl.current_edit.tag
+        if self._on_change_active and self._editor_ctl.current_edit:
+            tag = self._editor_ctl.current_edit.selected_tag
             album_type = self.widget.get_active_text()
             if self.set(tag, album_type):
+                log.debug("Setting tag_dirty5")
                 tag.is_dirty = True
                 self.emit("tag-changed")
 
 
 class GenreEditorWidget(ComboBoxEditorWidget):
     def __init__(self, name, widget, deep_copy_widget, editor_ctl):
-        self._on_change_active = False
-        self._deep_copy_widget = deep_copy_widget
-        super().__init__(name, widget, editor_ctl)
+        with self._onChangeInactive():
+            self._deep_copy_widget = deep_copy_widget
+            super().__init__(name, widget, editor_ctl)
 
-        self.widget.set_wrap_width(5)
-        self.widget.set_entry_text_column(0)
+            self.widget.set_wrap_width(5)
+            self.widget.set_entry_text_column(0)
 
-        self.widget.remove_all()
-        self.widget.append("-1", "")
-        for genre in sorted(GENRES.iter()):
-            self.widget.append(str(genre.id), genre.name)
-        self.widget.set_active(0)
-        self._on_change_active = True
+            self.widget.remove_all()
+            self.widget.append("-1", "")
+            for genre in sorted(GENRES.iter()):
+                self.widget.append(str(genre.id), genre.name)
+            self.widget.set_active(0)
 
     def init(self, tag):
         # TODO: ID32 v1: only show standard genres and disallow text entry of custom
@@ -388,8 +390,9 @@ class GenreEditorWidget(ComboBoxEditorWidget):
                 genre_text = self.widget.get_active_text()
                 genre = Genre(genre_text, genre_map=GENRES) if genre_text else None
 
-            tag = self._editor_ctl.current_edit.tag
+            tag = self._editor_ctl.current_edit.selected_tag
             if self.set(tag, genre):
+                log.debug("Setting tag_dirty6")
                 tag.is_dirty = True
                 self.emit("tag-changed")
 
@@ -405,45 +408,43 @@ class TagVersionChoiceWidget(EditorWidget):
             for v in (ID3_V2_4, ID3_V2_3, ID3_V1_1, ID3_V1_0)
         }
 
-    def init(self, tag):
+    def init(self, selected, other):
         with self._onChangeInactive():
             self.widget.remove_all()
 
             for vid, (version, version_str) in self.id3_versions.items():
-                self.widget.append(vid, f"ID3 {id3.versionToString(version)}")
-                if tag.version == version:
-                    self.widget.set_active_id(vid)
+                if selected.version == version or (other and other.version == version):
+                    self.widget.append(vid, f"ID3 {id3.versionToString(version)}")
+                    if selected.version == version:
+                        self.widget.set_active_id(vid)
+
+            self.widget.set_sensitive(True if other else False)
 
     def _connect(self):
         self.widget.connect("changed", self._onChanged)
 
     def set(self, tag, value) -> bool:
-        version = tuple([int(s) for s in value.split(".")])
-        assert id3.isValidVersion(version)
-        if version != tag.version:
-            tag.version = version
-            return True
+        return False
 
     def get(self):
         return self.widget.get_active_id()
 
     def _onChanged(self, widget):
-        version_id = self.widget.get_active_id()
-        print("CHANGED:", version_id)
-        if not version_id:
+        if not self._on_change_active:
             return
 
-        # FIXME
-        # return
+        version_id = self.widget.get_active_id()
+        if not version_id:
+            return
+        curr_edit = self._editor_ctl.current_edit
 
-        if self._editor_ctl.current_edit:
-            tag = self._editor_ctl.current_edit.tag
-            if self.set(tag, version_id):
-                tag.is_dirty = True
-                self.emit("tag-changed")
+        if curr_edit:
+            curr_tag = curr_edit.tag if not version_id.startswith("1.") else curr_edit.second_v1_tag
+            curr_edit.selected_tag = curr_tag
+            self._editor_ctl.edit(self._editor_ctl.current_edit)
 
     def _onDeepCopy(self, entry, icon_pos, button):
-        pass
+        raise NotImplementedError()
 
 
 class EditorControl(GObject.GObject):
@@ -528,6 +529,7 @@ class EditorControl(GObject.GObject):
     def _onTagValueCopy(self, editor_widget, copy_value):
         for audio_file in self._file_list_ctl.list_store.iterAudioFiles():
             if editor_widget.set(audio_file.tag, copy_value):
+                log.debug("Setting tag_dirty1")
                 audio_file.tag.is_dirty = True
                 self._file_list_ctl.list_store.updateRow(audio_file)
 
@@ -543,6 +545,7 @@ class EditorControl(GObject.GObject):
             i = 1
             for audio_file in self._file_list_ctl.list_store.iterAudioFiles():
                 if editor_widget.set(audio_file.tag, str(i)):
+                    log.debug("Setting tag_dirty2")
                     audio_file.tag.is_dirty = True
                     self._file_list_ctl.list_store.updateRow(audio_file)
                 i += 1
@@ -552,6 +555,7 @@ class EditorControl(GObject.GObject):
             file_count = len(all_files)
             for audio_file in self._file_list_ctl.list_store.iterAudioFiles():
                 if editor_widget.set(audio_file.tag, str(file_count)):
+                    log.debug("Setting tag_dirty3")
                     audio_file.tag.is_dirty = True
                     self._file_list_ctl.list_store.updateRow(audio_file)
 
@@ -560,19 +564,30 @@ class EditorControl(GObject.GObject):
 
     def edit(self, audio_file):
         self._current_audio_file = audio_file
-        tag = audio_file.tag if audio_file else None
+        tag1 = audio_file.tag if audio_file else None
+        tag2 = audio_file.second_v1_tag if audio_file else None
+        if audio_file.selected_tag is None:
+            audio_file.selected_tag = tag1
 
-        if tag and tag.isV1():
+        assert audio_file.selected_tag in (tag1, tag2)
+
+        if audio_file.selected_tag and audio_file.selected_tag.isV1():
             # ID3 v1 supports no Extras
             self._notebook.get_nth_page(self.EXTRAS_PAGE).hide()
         else:
             self._notebook.get_nth_page(self.EXTRAS_PAGE).show()
 
-        for widget in self._editor_widgets.values():
-            try:
-                widget.init(tag)
-            except Exception as ex:
-                log.exception(ex)
+        for widget_name, widget in self._editor_widgets.items():
+            if widget_name == "tag_version_combo":
+                all_tags = {tag1, tag2}
+                all_tags.remove(audio_file.selected_tag)
+                assert len(all_tags) == 1
+                widget.init(audio_file.selected_tag, all_tags.pop())
+            else:
+                try:
+                    widget.init(audio_file.selected_tag)
+                except Exception as ex:
+                    log.exception(ex)
 
     @property
     def current_edit(self):
