@@ -2,7 +2,7 @@ import dataclasses
 
 project_name = "Mop"
 version      = "0.1a3"
-release_name = ""
+release_name = "EHG"
 author       = "Travis Shirk"
 author_email = "travis@pobox.com"
 years        = "2020"

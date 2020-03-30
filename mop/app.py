@@ -7,7 +7,7 @@ from eyed3.utils import formatTime, formatSize
 
 from .config import getState
 from .utils import eyed3_load, eyed3_load_dir
-from .dialogs import Dialog, FileSaveDialog
+from .dialogs import Dialog, FileSaveDialog, AboutDialog
 from .editorctl import EditorControl
 from .filesctl import FileListControl
 
@@ -223,14 +223,7 @@ class MopWindow:
 
     @staticmethod
     def _onHelpAbout(_):
-        about_dialog = Gtk.AboutDialog()
-        # FIXME: get this data from elsewhere
-        about_dialog.set_program_name("Mop")
-        about_dialog.set_version("0.1")
-        about_dialog.set_website("https://github.com/nicfit/mop")
-        about_dialog.set_authors(["Travis Shirk <travis@pobox.com>"])
-        about_dialog.set_license_type(Gtk.License. GPL_3_0_ONLY)
-
+        about_dialog = AboutDialog()
         about_dialog.run()
         about_dialog.destroy()
 

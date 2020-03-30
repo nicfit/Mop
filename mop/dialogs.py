@@ -1,3 +1,6 @@
+from sys import version_info as python_version_info
+from eyed3 import version as eyeD3_version
+from gi import version_info as gtk_version_info
 from eyed3.id3 import ID3_V1_0, ID3_V1_1, ID3_V2_3, ID3_V2_4, ID3_ANY_VERSION, versionToString
 from pathlib import Path
 from gi.repository import Gtk
@@ -45,3 +48,37 @@ class FileSaveDialog(Dialog):
                 break
 
         return resp, options
+
+
+class AboutDialog(Gtk.AboutDialog):
+    def __init__(self, *args, **kwargs):
+        from .__about__ import project_name, version, author, author_email, years, release_name
+
+        super().__init__(*args, **kwargs)
+        self.set_program_name(project_name)
+
+        version_str = version
+        if release_name:
+            version_str += f" ({release_name})"
+        self.set_version(version_str)
+
+        # TODO: support multiple authors (AUTHORS.rst)
+        self.set_authors([f"{author} <{author_email}>"])
+        self.set_license_type(Gtk.License. GPL_3_0_ONLY)
+        self.set_copyright(f"Copyright © {author}, {years}")
+
+        def versionInfoToString(info):
+            return ".".join([str(x) for x in info])
+
+        self.set_comments(f"Running with Python {versionInfoToString(python_version_info[:3])}, "
+                          f"GTK+ {versionInfoToString(gtk_version_info)}, "
+                          "and "
+                          f"eyeD3 {eyeD3_version}")
+        # TODO: Get URL from __about__
+        self.set_website_label("GitHub")
+        self.set_website("https://github.com/nicfit/mop")
+        # TODO:
+        #self.set_logo()
+        #self.set_artists()
+        #self.set_documentors()
+        #self.set_translator_credits()
