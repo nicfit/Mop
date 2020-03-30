@@ -12,6 +12,16 @@ log = logging.getLogger(__name__)
 ENTRY_ICON_PRIMARY = Gtk.EntryIconPosition.PRIMARY
 ENTRY_ICON_SECONDARY = Gtk.EntryIconPosition.SECONDARY
 
+# Genre models. A static ID3 v1 and dynamic v2, for quick swapping
+_id3_v1_genre_model = Gtk.ListStore(str, str)
+_id3_v1_genre_model.append(["", "-1"])
+_id3_v2_genre_model = Gtk.ListStore(str, str)
+_id3_v2_genre_model.append(["", "-1"])
+for genre in sorted(GENRES.iter()):
+    _id3_v2_genre_model.append([genre.name, str(genre.id)])
+    if genre.id is not None and genre.id <= GENRES.WINAMP_GENRE_MAX:
+        _id3_v1_genre_model.append([genre.name, str(genre.id)])
+
 
 class EditorWidget(GObject.GObject):
     __gsignals__ = {
@@ -345,16 +355,18 @@ class GenreEditorWidget(ComboBoxEditorWidget):
             self.widget.set_wrap_width(5)
             self.widget.set_entry_text_column(0)
 
-            self.widget.remove_all()
-            self.widget.append("-1", "")
-            for genre in sorted(GENRES.iter()):
-                self.widget.append(str(genre.id), genre.name)
-            self.widget.set_active(0)
-
     def init(self, tag):
-        # TODO: ID32 v1: only show standard genres and disallow text entry of custom
+        # ID3 v1 cannot edit/edit genres, v2 can
+        entry = self.widget.get_child()
+        entry.set_can_focus(True if tag.isV2() else False)
+        entry.set_editable(True if tag.isV2() else False)
 
         with self._onChangeInactive():
+            if tag.isV1():
+                self.widget.set_model(_id3_v1_genre_model)
+            else:
+                self.widget.set_model(_id3_v2_genre_model)
+
             if tag.genre is None:
                 # No genre
                 self.widget.set_active_id("-1")
@@ -362,15 +374,19 @@ class GenreEditorWidget(ComboBoxEditorWidget):
                 # Standard genre
                 self.widget.set_active_id(str(tag.genre.id))
             else:
-                # Custom (non-std) genre
-                try:
-                    gid = str(GENRES.get(tag.genre.name).id)
-                except KeyError:
-                    genre = GENRES.add(tag.genre.name)
-                    gid = str(genre.id)
-                    self.widget.append(gid, genre.name)
+                if tag.isV2():
+                    # Custom (non-std) genre
+                    try:
+                        gid = str(GENRES.get(tag.genre.name).id)
+                    except KeyError:
+                        genre = GENRES.add(tag.genre.name)
+                        gid = str(genre.id)
+                        self.widget.append(gid, genre.name)
 
-                self.widget.set_active_id(gid)
+                    self.widget.set_active_id(gid)
+                else:
+                    # No custom for v1.x
+                    self.widget.set_active_id("-1")
 
     def set(self, tag, genre: Genre) -> bool:
         if (tag.genre or None) != (genre or None):
@@ -398,8 +414,6 @@ class GenreEditorWidget(ComboBoxEditorWidget):
 
 
 class TagVersionChoiceWidget(EditorWidget):
-    # FIXME: Change to a choice for showing one of the two tags that may be in file.
-
     def __init__(self, *args):
         super().__init__(*args)
 
