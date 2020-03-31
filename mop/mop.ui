@@ -208,6 +208,7 @@
                           <object class="GtkLabel" id="current_edit_mpeg_bitrate_label">
                             <property name="visible">True</property>
                             <property name="can_focus">False</property>
+                            <property name="halign">start</property>
                             <property name="label" translatable="yes">Bitrate: {mpg_bitrate}</property>
                             <property name="use_markup">True</property>
                           </object>
@@ -230,19 +231,6 @@
                           </packing>
                         </child>
                         <child>
-                          <object class="GtkLabel" id="current_edit_mpeg_mode_label">
-                            <property name="visible">True</property>
-                            <property name="can_focus">False</property>
-                            <property name="halign">start</property>
-                            <property name="label" translatable="yes">Mode: {mgp_mode}</property>
-                            <property name="use_markup">True</property>
-                          </object>
-                          <packing>
-                            <property name="left_attach">3</property>
-                            <property name="top_attach">2</property>
-                          </packing>
-                        </child>
-                        <child>
                           <object class="GtkLabel" id="current_edit_size_label">
                             <property name="visible">True</property>
                             <property name="can_focus">False</property>
@@ -253,20 +241,6 @@
                           <packing>
                             <property name="left_attach">0</property>
                             <property name="top_attach">1</property>
-                            <property name="width">2</property>
-                          </packing>
-                        </child>
-                        <child>
-                          <object class="GtkLabel" id="current_edit_time_label">
-                            <property name="visible">True</property>
-                            <property name="can_focus">False</property>
-                            <property name="halign">start</property>
-                            <property name="label" translatable="yes">&lt;b&gt;Time:&lt;/b&gt; {time}  ({total} total)</property>
-                          </object>
-                          <packing>
-                            <property name="left_attach">2</property>
-                            <property name="top_attach">1</property>
-                            <property name="width">2</property>
                           </packing>
                         </child>
                         <child>
@@ -282,8 +256,23 @@
                           <packing>
                             <property name="left_attach">0</property>
                             <property name="top_attach">0</property>
-                            <property name="width">4</property>
+                            <property name="width">3</property>
                           </packing>
+                        </child>
+                        <child>
+                          <object class="GtkLabel" id="current_edit_time_label">
+                            <property name="visible">True</property>
+                            <property name="can_focus">False</property>
+                            <property name="halign">start</property>
+                            <property name="label" translatable="yes">&lt;b&gt;Time:&lt;/b&gt; {time}  ({total} total)</property>
+                          </object>
+                          <packing>
+                            <property name="left_attach">1</property>
+                            <property name="top_attach">1</property>
+                          </packing>
+                        </child>
+                        <child>
+                          <placeholder/>
                         </child>
                       </object>
                     </child>
@@ -417,6 +406,7 @@
                                                       <object class="GtkLabel">
                                                         <property name="visible">True</property>
                                                         <property name="can_focus">False</property>
+                                                        <property name="halign">end</property>
                                                         <property name="label" translatable="yes">Album:</property>
                                                         <property name="justify">right</property>
                                                         <property name="single_line_mode">True</property>
@@ -444,6 +434,7 @@
                                                       <object class="GtkLabel">
                                                         <property name="visible">True</property>
                                                         <property name="can_focus">False</property>
+                                                        <property name="halign">end</property>
                                                         <property name="label" translatable="yes">Artist:</property>
                                                         <property name="justify">right</property>
                                                         <property name="single_line_mode">True</property>
@@ -471,6 +462,7 @@
                                                       <object class="GtkLabel">
                                                         <property name="visible">True</property>
                                                         <property name="can_focus">False</property>
+                                                        <property name="halign">end</property>
                                                         <property name="label" translatable="yes">Title:</property>
                                                         <property name="justify">right</property>
                                                         <property name="single_line_mode">True</property>
@@ -485,6 +477,7 @@
                                                       <object class="GtkLabel">
                                                         <property name="visible">True</property>
                                                         <property name="can_focus">False</property>
+                                                        <property name="halign">end</property>
                                                         <property name="label" translatable="yes">Comment:</property>
                                                         <property name="justify">right</property>
                                                         <property name="single_line_mode">True</property>
@@ -535,6 +528,7 @@
                                                           <object class="GtkLabel">
                                                             <property name="visible">True</property>
                                                             <property name="can_focus">False</property>
+                                                            <property name="halign">end</property>
                                                             <property name="label" translatable="yes">Release:</property>
                                                           </object>
                                                           <packing>
@@ -546,6 +540,7 @@
                                                           <object class="GtkLabel">
                                                             <property name="visible">True</property>
                                                             <property name="can_focus">False</property>
+                                                            <property name="halign">end</property>
                                                             <property name="label" translatable="yes">Recording:</property>
                                                             <property name="justify">right</property>
                                                           </object>
@@ -558,6 +553,7 @@
                                                           <object class="GtkLabel">
                                                             <property name="visible">True</property>
                                                             <property name="can_focus">False</property>
+                                                            <property name="halign">end</property>
                                                             <property name="label" translatable="yes">Original release:</property>
                                                             <property name="justify">right</property>
                                                           </object>
@@ -659,6 +655,7 @@
                                                       <object class="GtkLabel">
                                                         <property name="visible">True</property>
                                                         <property name="can_focus">False</property>
+                                                        <property name="halign">end</property>
                                                         <property name="label" translatable="yes">Track #:</property>
                                                       </object>
                                                       <packing>
@@ -683,6 +680,7 @@
                                                       <object class="GtkLabel">
                                                         <property name="visible">True</property>
                                                         <property name="can_focus">False</property>
+                                                        <property name="halign">end</property>
                                                         <property name="label" translatable="yes">Disc total:</property>
                                                       </object>
                                                       <packing>
@@ -694,6 +692,7 @@
                                                       <object class="GtkLabel">
                                                         <property name="visible">True</property>
                                                         <property name="can_focus">False</property>
+                                                        <property name="halign">end</property>
                                                         <property name="label" translatable="yes">Disc #:</property>
                                                       </object>
                                                       <packing>
@@ -757,6 +756,7 @@
                                                       <object class="GtkLabel">
                                                         <property name="visible">True</property>
                                                         <property name="can_focus">False</property>
+                                                        <property name="halign">end</property>
                                                         <property name="label" translatable="yes">Genre:</property>
                                                       </object>
                                                       <packing>
@@ -768,6 +768,7 @@
                                                       <object class="GtkLabel">
                                                         <property name="visible">True</property>
                                                         <property name="can_focus">False</property>
+                                                        <property name="halign">end</property>
                                                         <property name="label" translatable="yes">Album Type:</property>
                                                       </object>
                                                       <packing>
@@ -931,7 +932,7 @@
                                               <object class="GtkLabel">
                                                 <property name="visible">True</property>
                                                 <property name="can_focus">False</property>
-                                                <property name="halign">start</property>
+                                                <property name="halign">end</property>
                                                 <property name="label" translatable="yes">Original artist:</property>
                                                 <property name="justify">right</property>
                                                 <property name="single_line_mode">True</property>
@@ -959,7 +960,7 @@
                                               <object class="GtkLabel">
                                                 <property name="visible">True</property>
                                                 <property name="can_focus">False</property>
-                                                <property name="halign">start</property>
+                                                <property name="halign">end</property>
                                                 <property name="label" translatable="yes">Album artist:</property>
                                                 <property name="justify">right</property>
                                                 <property name="single_line_mode">True</property>
@@ -973,7 +974,7 @@
                                               <object class="GtkLabel">
                                                 <property name="visible">True</property>
                                                 <property name="can_focus">False</property>
-                                                <property name="halign">start</property>
+                                                <property name="halign">end</property>
                                                 <property name="label" translatable="yes">Composer:</property>
                                                 <property name="justify">right</property>
                                                 <property name="single_line_mode">True</property>
@@ -1002,7 +1003,7 @@
                                               <object class="GtkLabel">
                                                 <property name="visible">True</property>
                                                 <property name="can_focus">False</property>
-                                                <property name="halign">start</property>
+                                                <property name="halign">end</property>
                                                 <property name="label" translatable="yes">Encoded by:</property>
                                                 <property name="justify">right</property>
                                                 <property name="single_line_mode">True</property>
@@ -1081,6 +1082,7 @@
                                               <object class="GtkLabel">
                                                 <property name="visible">True</property>
                                                 <property name="can_focus">False</property>
+                                                <property name="halign">end</property>
                                                 <property name="label" translatable="yes">Publisher:</property>
                                               </object>
                                               <packing>
