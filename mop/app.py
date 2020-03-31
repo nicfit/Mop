@@ -256,12 +256,11 @@ class MopWindow:
 
         # Audio info (mpeg)
         info = audio_file.info
-        text = f"<b>MPEG</b> {info.mp3_header.version}, Layer {'I' * info.mp3_header.layer}" \
-                if info else ""
+        text = f"<b>MPEG</b> {info.mp3_header.version}, "\
+               f"Layer {'I' * info.mp3_header.layer}, " \
+               f"{info.mp3_header.mode}"\
+            if info else ""
         self._file_mpeg_info_labels["mpeg_info_label"].set_markup(text)
-
-        text = f"<b>Mode:</b> {info.mp3_header.mode}" if info else ""
-        self._file_mpeg_info_labels["mpeg_mode_label"].set_markup(text)
 
         text = f"<b>Bitrate:</b> {info.bit_rate_str}" if info else ""
         self._file_mpeg_info_labels["mpeg_bitrate_label"].set_markup(text)
