@@ -542,10 +542,11 @@ class EditorControl(GObject.GObject):
 
     def _onTagValueCopy(self, editor_widget, copy_value):
         for audio_file in self._file_list_ctl.list_store.iterAudioFiles():
-            if editor_widget.set(audio_file.tag, copy_value):
-                log.debug("Setting tag_dirty1")
-                audio_file.tag.is_dirty = True
-                self._file_list_ctl.list_store.updateRow(audio_file)
+            for tag in [t for t in (audio_file.tag, audio_file.second_v1_tag) if t]:
+                if editor_widget.set(tag, copy_value):
+                    log.debug("Setting tag_dirty1")
+                    tag.is_dirty = True
+                    self._file_list_ctl.list_store.updateRow(audio_file)
 
         # Update current edit
         self.edit(self.current_edit)
@@ -558,16 +559,18 @@ class EditorControl(GObject.GObject):
             # Track number -> 1, 2, 3, ...
             i = 1
             for audio_file in self._file_list_ctl.list_store.iterAudioFiles():
-                if editor_widget.set(audio_file.tag, str(i)):
-                    log.debug("Setting tag_dirty2")
-                    audio_file.tag.is_dirty = True
-                    self._file_list_ctl.list_store.updateRow(audio_file)
-                i += 1
+                for tag in [t for t in (audio_file.tag, audio_file.second_v1_tag) if t]:
+                    if editor_widget.set(tag, str(i)):
+                        log.debug("Setting tag_dirty2")
+                        tag.is_dirty = True
+                        self._file_list_ctl.list_store.updateRow(audio_file)
+                    i += 1
         elif editor_widget == track_total_entry:
             # Track total -> len(audio_files) ...
             all_files = list(self._file_list_ctl.list_store.iterAudioFiles())
             file_count = len(all_files)
             for audio_file in self._file_list_ctl.list_store.iterAudioFiles():
+                # No second_v1_tag supported needed for totals
                 if editor_widget.set(audio_file.tag, str(file_count)):
                     log.debug("Setting tag_dirty3")
                     audio_file.tag.is_dirty = True
