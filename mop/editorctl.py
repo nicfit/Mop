@@ -11,6 +11,7 @@ from .core import GENRES
 log = logging.getLogger(__name__)
 ENTRY_ICON_PRIMARY = Gtk.EntryIconPosition.PRIMARY
 ENTRY_ICON_SECONDARY = Gtk.EntryIconPosition.SECONDARY
+MOUSE_BUTTON1_MASK = Gdk.ModifierType.BUTTON1_MASK
 
 # Genre models. A static ID3 v1 and dynamic v2, for quick swapping
 _id3_v1_genre_model = Gtk.ListStore(str, str)
@@ -133,7 +134,8 @@ class EntryEditorWidget(EditorWidget):
 
     def _onDeepCopy(self, entry, icon_pos, button):
         if icon_pos == ENTRY_ICON_SECONDARY:
-            self.emit("tag-value-copy", self.get())
+            if button.state & MOUSE_BUTTON1_MASK:
+                self.emit("tag-value-copy", self.get())
 
 
 class SimpleAccessorEditorWidgetABC(EntryEditorWidget):
@@ -229,10 +231,11 @@ class NumTotalEditorWidget(EntryEditorWidget):
             return True
 
     def _onDeepCopy(self, entry, icon_pos, button):
-        if icon_pos == ENTRY_ICON_PRIMARY:
-            self.emit("tag-value-incr")
-        elif icon_pos == ENTRY_ICON_SECONDARY:
-            super()._onDeepCopy(entry, icon_pos, button)
+        if button.state & MOUSE_BUTTON1_MASK:
+            if icon_pos == ENTRY_ICON_PRIMARY:
+                self.emit("tag-value-incr")
+            elif icon_pos == ENTRY_ICON_SECONDARY:
+                super()._onDeepCopy(entry, icon_pos, button)
 
     def init(self, tag):
         major, minor = tag.version[:2]
@@ -304,6 +307,7 @@ class ComboBoxEditorWidget(EditorWidget):
         self._deep_copy_widget.connect("clicked", self._onDeepCopy)
 
     def _onDeepCopy(self, widget):
+        # This is a real button, not icon so no need to check mouse button
         self.emit("tag-value-copy", self.get())
 
 
