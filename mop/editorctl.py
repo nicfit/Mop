@@ -448,6 +448,7 @@ class TagVersionChoiceWidget(EditorWidget):
             return
 
         version_id = self.widget.get_active_id()
+        log.debug(f"Current tag version changed: {version_id}")
         if not version_id:
             return
         curr_edit = self._editor_ctl.current_edit
@@ -456,6 +457,7 @@ class TagVersionChoiceWidget(EditorWidget):
             curr_tag = curr_edit.tag if not version_id.startswith("1.") else curr_edit.second_v1_tag
             curr_edit.selected_tag = curr_tag
             self._editor_ctl.edit(self._editor_ctl.current_edit)
+            self._editor_ctl.file_list_ctl.list_store.updateRow(curr_edit)
 
     def _onDeepCopy(self, entry, icon_pos, button):
         raise NotImplementedError()
@@ -609,3 +611,7 @@ class EditorControl(GObject.GObject):
     @property
     def current_edit(self):
         return self._current_audio_file
+
+    @property
+    def file_list_ctl(self):
+        return self._file_list_ctl

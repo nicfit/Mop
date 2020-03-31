@@ -49,13 +49,16 @@ class AudioFileListStore:
 
         dirty = (audio_file.tag and audio_file.tag.is_dirty) or \
                 (audio_file.second_v1_tag and audio_file.second_v1_tag.is_dirty)
-        return [path.stem,
-                track_num(audio_file.tag) if audio_file.tag else None,
-                audio_file.tag.title if audio_file.tag else None,
-                audio_file.tag.artist if audio_file.tag else None,
-                audio_file.tag.album if audio_file.tag else None,
-                Pango.Weight.BOOK if not dirty else Pango.Weight.BOLD
-                ]
+
+        tag = audio_file.selected_tag or audio_file.tag
+        return [
+            path.stem,
+            track_num(tag) if tag else None,
+            tag.title if tag else None,
+            tag.artist if tag else None,
+            tag.album if tag else None,
+            Pango.Weight.BOOK if not dirty else Pango.Weight.BOLD
+            ]
 
     def updateRow(self, audio_file):
         row = self.getRow(audio_file)
