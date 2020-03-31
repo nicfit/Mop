@@ -455,8 +455,8 @@ class TagVersionChoiceWidget(EditorWidget):
 
         if curr_edit:
             curr_tag = curr_edit.tag if not version_id.startswith("1.") else curr_edit.second_v1_tag
-            curr_edit.selected_tag = curr_tag
-            self._editor_ctl.edit(self._editor_ctl.current_edit)
+            # Forcing edit of curr_tag with tag= argument. Otherwise the prefer checkbutton decides.
+            self._editor_ctl.edit(self._editor_ctl.current_edit, tag=curr_tag)
             self._editor_ctl.file_list_ctl.list_store.updateRow(curr_edit)
 
     def _onDeepCopy(self, entry, icon_pos, button):
@@ -481,6 +481,8 @@ class EditorControl(GObject.GObject):
         self._notebook = builder.get_object("editor_notebook")
         # XXX: Disable WIP notebook tabs
         self._notebook.get_nth_page(self.IMAGES_PAGE).hide()
+
+        self._edit_prefer_v1_checkbutton = builder.get_object("default_prefer_v1_checkbutton")
 
         self._editor_widgets = {}
         for widget_name in (
@@ -581,12 +583,19 @@ class EditorControl(GObject.GObject):
         # Update current edit
         self.edit(self.current_edit)
 
-    def edit(self, audio_file):
+    def edit(self, audio_file, tag=None):
         self._current_audio_file = audio_file
         tag1 = audio_file.tag if audio_file else None
         tag2 = audio_file.second_v1_tag if audio_file else None
-        if audio_file.selected_tag is None:
-            audio_file.selected_tag = tag1
+
+        if not tag:
+            # If two tags and a selection has not yet been made.
+            if tag2 and self._edit_prefer_v1_checkbutton.get_active():
+                audio_file.selected_tag = tag2
+            else:
+                audio_file.selected_tag = tag1
+        else:
+            audio_file.selected_tag = tag
 
         assert audio_file.selected_tag in (tag1, tag2)
 

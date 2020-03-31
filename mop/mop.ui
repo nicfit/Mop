@@ -1242,16 +1242,43 @@
                       </object>
                     </child>
                     <child type="label">
-                      <object class="GtkComboBoxText" id="current_edit_tag_version_combo">
+                      <object class="GtkBox">
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
-                        <property name="active">0</property>
-                        <items>
-                          <item translatable="yes">ID3 v2.4</item>
-                          <item translatable="yes">ID3 v2.3</item>
-                          <item translatable="yes">ID3 1.1</item>
-                          <item translatable="yes">ID3 1.0</item>
-                        </items>
+                        <property name="spacing">5</property>
+                        <child>
+                          <object class="GtkComboBoxText" id="current_edit_tag_version_combo">
+                            <property name="visible">True</property>
+                            <property name="can_focus">False</property>
+                            <property name="active">0</property>
+                            <items>
+                              <item translatable="yes">ID3 v2.4</item>
+                              <item translatable="yes">ID3 v2.3</item>
+                              <item translatable="yes">ID3 1.1</item>
+                              <item translatable="yes">ID3 1.0</item>
+                            </items>
+                          </object>
+                          <packing>
+                            <property name="expand">False</property>
+                            <property name="fill">True</property>
+                            <property name="position">1</property>
+                          </packing>
+                        </child>
+                        <child>
+                          <object class="GtkCheckButton" id="default_prefer_v1_checkbutton">
+                            <property name="label" translatable="yes">Prefer ID3 v1 tags</property>
+                            <property name="visible">True</property>
+                            <property name="can_focus">True</property>
+                            <property name="receives_default">False</property>
+                            <property name="tooltip_text" translatable="yes">If a file contains both a v2 and v1 tag, edit v1 by default.</property>
+                            <property name="draw_indicator">True</property>
+                          </object>
+                          <packing>
+                            <property name="expand">False</property>
+                            <property name="fill">True</property>
+                            <property name="position">2</property>
+                          </packing>
+                        </child>
                       </object>
                     </child>
                   </object>
