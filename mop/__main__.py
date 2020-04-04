@@ -16,7 +16,7 @@ class ArgumentParser(argparse.ArgumentParser):
         self.add_argument("--version", action="version", version=f"%(prog)s {version}")
         addLoggingArgs(self)
         self.add_argument("path_args", nargs="*", metavar="PATH", type=pathlib.Path,
-                          help="An audio file or directory of audio files.")
+                          help="An file and/or directories of audio files.")
 
 
 def main():

@@ -250,6 +250,7 @@
                             <property name="halign">start</property>
                             <property name="label" translatable="yes">&lt;b&gt;Path:&lt;/b&gt; ...</property>
                             <property name="use_markup">True</property>
+                            <property name="selectable">True</property>
                             <property name="ellipsize">middle</property>
                             <property name="track_visited_links">False</property>
                           </object>
@@ -858,7 +859,246 @@
                                               </packing>
                                             </child>
                                             <child>
-                                              <placeholder/>
+                                              <object class="GtkExpander">
+                                                <property name="visible">True</property>
+                                                <property name="can_focus">True</property>
+                                                <child>
+                                                  <object class="GtkBox">
+                                                    <property name="visible">True</property>
+                                                    <property name="can_focus">False</property>
+                                                    <property name="spacing">5</property>
+                                                    <child>
+                                                      <object class="GtkGrid">
+                                                        <property name="visible">True</property>
+                                                        <property name="can_focus">False</property>
+                                                        <property name="row_spacing">5</property>
+                                                        <property name="column_spacing">5</property>
+                                                        <child>
+                                                          <object class="GtkEntry" id="current_edit_tag_albumArtist_entry1">
+                                                            <property name="visible">True</property>
+                                                            <property name="can_focus">True</property>
+                                                            <property name="hexpand">True</property>
+                                                            <property name="text" translatable="yes">TPE2</property>
+                                                            <property name="caps_lock_warning">False</property>
+                                                            <property name="secondary_icon_stock">gtk-copy</property>
+                                                          </object>
+                                                          <packing>
+                                                            <property name="left_attach">1</property>
+                                                            <property name="top_attach">0</property>
+                                                          </packing>
+                                                        </child>
+                                                        <child>
+                                                          <object class="GtkEntry" id="current_edit_tag_composer_entry1">
+                                                            <property name="visible">True</property>
+                                                            <property name="can_focus">True</property>
+                                                            <property name="hexpand">True</property>
+                                                            <property name="text" translatable="yes">TCOM</property>
+                                                            <property name="caps_lock_warning">False</property>
+                                                            <property name="secondary_icon_stock">gtk-copy</property>
+                                                          </object>
+                                                          <packing>
+                                                            <property name="left_attach">1</property>
+                                                            <property name="top_attach">2</property>
+                                                          </packing>
+                                                        </child>
+                                                        <child>
+                                                          <object class="GtkLabel">
+                                                            <property name="visible">True</property>
+                                                            <property name="can_focus">False</property>
+                                                            <property name="halign">end</property>
+                                                            <property name="label" translatable="yes">Original artist:</property>
+                                                            <property name="justify">right</property>
+                                                            <property name="single_line_mode">True</property>
+                                                          </object>
+                                                          <packing>
+                                                            <property name="left_attach">0</property>
+                                                            <property name="top_attach">1</property>
+                                                          </packing>
+                                                        </child>
+                                                        <child>
+                                                          <object class="GtkEntry" id="current_edit_tag_origArtist_entry1">
+                                                            <property name="visible">True</property>
+                                                            <property name="can_focus">True</property>
+                                                            <property name="hexpand">True</property>
+                                                            <property name="text" translatable="yes">TOPE</property>
+                                                            <property name="caps_lock_warning">False</property>
+                                                            <property name="secondary_icon_stock">gtk-copy</property>
+                                                          </object>
+                                                          <packing>
+                                                            <property name="left_attach">1</property>
+                                                            <property name="top_attach">1</property>
+                                                          </packing>
+                                                        </child>
+                                                        <child>
+                                                          <object class="GtkLabel">
+                                                            <property name="visible">True</property>
+                                                            <property name="can_focus">False</property>
+                                                            <property name="halign">end</property>
+                                                            <property name="label" translatable="yes">Album artist:</property>
+                                                            <property name="justify">right</property>
+                                                            <property name="single_line_mode">True</property>
+                                                          </object>
+                                                          <packing>
+                                                            <property name="left_attach">0</property>
+                                                            <property name="top_attach">0</property>
+                                                          </packing>
+                                                        </child>
+                                                        <child>
+                                                          <object class="GtkLabel">
+                                                            <property name="visible">True</property>
+                                                            <property name="can_focus">False</property>
+                                                            <property name="halign">end</property>
+                                                            <property name="label" translatable="yes">Composer:</property>
+                                                            <property name="justify">right</property>
+                                                            <property name="single_line_mode">True</property>
+                                                            <property name="angle">2.2351741811588166e-10</property>
+                                                          </object>
+                                                          <packing>
+                                                            <property name="left_attach">0</property>
+                                                            <property name="top_attach">2</property>
+                                                          </packing>
+                                                        </child>
+                                                        <child>
+                                                          <object class="GtkEntry" id="current_edit_tag_encodedBy_entry1">
+                                                            <property name="visible">True</property>
+                                                            <property name="can_focus">True</property>
+                                                            <property name="hexpand">True</property>
+                                                            <property name="text" translatable="yes">TENC</property>
+                                                            <property name="caps_lock_warning">False</property>
+                                                            <property name="secondary_icon_stock">gtk-copy</property>
+                                                          </object>
+                                                          <packing>
+                                                            <property name="left_attach">1</property>
+                                                            <property name="top_attach">3</property>
+                                                          </packing>
+                                                        </child>
+                                                        <child>
+                                                          <object class="GtkLabel">
+                                                            <property name="visible">True</property>
+                                                            <property name="can_focus">False</property>
+                                                            <property name="halign">end</property>
+                                                            <property name="label" translatable="yes">Encoded by:</property>
+                                                            <property name="justify">right</property>
+                                                            <property name="single_line_mode">True</property>
+                                                            <property name="angle">2.2351741811588166e-10</property>
+                                                          </object>
+                                                          <packing>
+                                                            <property name="left_attach">0</property>
+                                                            <property name="top_attach">3</property>
+                                                          </packing>
+                                                        </child>
+                                                      </object>
+                                                      <packing>
+                                                        <property name="expand">True</property>
+                                                        <property name="fill">True</property>
+                                                        <property name="position">0</property>
+                                                      </packing>
+                                                    </child>
+                                                    <child>
+                                                      <object class="GtkGrid">
+                                                        <property name="visible">True</property>
+                                                        <property name="can_focus">False</property>
+                                                        <property name="row_spacing">5</property>
+                                                        <property name="column_spacing">5</property>
+                                                        <child>
+                                                          <object class="GtkEntry" id="current_edit_tag_copyright_entry1">
+                                                            <property name="visible">True</property>
+                                                            <property name="can_focus">True</property>
+                                                            <property name="hexpand">True</property>
+                                                            <property name="text" translatable="yes">TCOP</property>
+                                                            <property name="caps_lock_warning">False</property>
+                                                            <property name="secondary_icon_stock">gtk-copy</property>
+                                                          </object>
+                                                          <packing>
+                                                            <property name="left_attach">1</property>
+                                                            <property name="top_attach">1</property>
+                                                          </packing>
+                                                        </child>
+                                                        <child>
+                                                          <object class="GtkLabel">
+                                                            <property name="visible">True</property>
+                                                            <property name="can_focus">False</property>
+                                                            <property name="halign">end</property>
+                                                            <property name="label" translatable="yes">Copyright:</property>
+                                                          </object>
+                                                          <packing>
+                                                            <property name="left_attach">0</property>
+                                                            <property name="top_attach">1</property>
+                                                          </packing>
+                                                        </child>
+                                                        <child>
+                                                          <object class="GtkLabel">
+                                                            <property name="visible">True</property>
+                                                            <property name="can_focus">False</property>
+                                                            <property name="halign">end</property>
+                                                            <property name="label" translatable="yes">URL:</property>
+                                                          </object>
+                                                          <packing>
+                                                            <property name="left_attach">0</property>
+                                                            <property name="top_attach">2</property>
+                                                          </packing>
+                                                        </child>
+                                                        <child>
+                                                          <object class="GtkEntry" id="current_edit_tag_url_entry1">
+                                                            <property name="visible">True</property>
+                                                            <property name="can_focus">True</property>
+                                                            <property name="hexpand">True</property>
+                                                            <property name="caps_lock_warning">False</property>
+                                                            <property name="secondary_icon_stock">gtk-copy</property>
+                                                          </object>
+                                                          <packing>
+                                                            <property name="left_attach">1</property>
+                                                            <property name="top_attach">2</property>
+                                                          </packing>
+                                                        </child>
+                                                        <child>
+                                                          <object class="GtkLabel">
+                                                            <property name="visible">True</property>
+                                                            <property name="can_focus">False</property>
+                                                            <property name="halign">end</property>
+                                                            <property name="label" translatable="yes">Publisher:</property>
+                                                          </object>
+                                                          <packing>
+                                                            <property name="left_attach">0</property>
+                                                            <property name="top_attach">0</property>
+                                                          </packing>
+                                                        </child>
+                                                        <child>
+                                                          <object class="GtkEntry" id="current_edit_tag_publisher_entry1">
+                                                            <property name="visible">True</property>
+                                                            <property name="can_focus">True</property>
+                                                            <property name="hexpand">True</property>
+                                                            <property name="text" translatable="yes">TPUB</property>
+                                                            <property name="caps_lock_warning">False</property>
+                                                            <property name="secondary_icon_stock">gtk-copy</property>
+                                                          </object>
+                                                          <packing>
+                                                            <property name="left_attach">1</property>
+                                                            <property name="top_attach">0</property>
+                                                          </packing>
+                                                        </child>
+                                                      </object>
+                                                      <packing>
+                                                        <property name="expand">True</property>
+                                                        <property name="fill">True</property>
+                                                        <property name="position">1</property>
+                                                      </packing>
+                                                    </child>
+                                                  </object>
+                                                </child>
+                                                <child type="label">
+                                                  <object class="GtkLabel">
+                                                    <property name="visible">True</property>
+                                                    <property name="can_focus">False</property>
+                                                    <property name="label" translatable="yes">Extras</property>
+                                                  </object>
+                                                </child>
+                                              </object>
+                                              <packing>
+                                                <property name="expand">False</property>
+                                                <property name="fill">True</property>
+                                                <property name="position">2</property>
+                                              </packing>
                                             </child>
                                           </object>
                                         </child>

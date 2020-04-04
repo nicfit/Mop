@@ -16,12 +16,13 @@ class Dialog:
             raise ValueError(f"Dialog not found: {dialog_name}")
         self._builder = builder
 
-    def run(self):
+    def run(self, destroy=True):
         try:
             resp = self._dialog.run()
             return resp
         finally:
-            self._dialog.destroy()
+            if destroy:
+                self._dialog.destroy()
 
 
 class FileSaveDialog(Dialog):
@@ -82,3 +83,45 @@ class AboutDialog(Gtk.AboutDialog):
         #self.set_artists()
         #self.set_documentors()
         #self.set_translator_credits()
+
+
+class FileChooserDialog(Dialog):
+    def __init__(self, parent):
+        super().__init__("file_chooser_dialog")
+        self._dialog.set_parent(parent)
+
+        for radiobutton in ("file_chooser_open_dirs_radiobutton",
+                            "file_chooser_open_files_radiobutton"):
+            self._builder.get_object(radiobutton).connect("toggled", self._onActionChange)
+        self._builder.get_object("file_chooser_open_dirs_radiobutton").toggled()
+
+        self._dialog.set_select_multiple(True)
+
+    def _onActionChange(self, radiobutton):
+        if radiobutton.get_active():
+            if "_dirs_" in radiobutton.get_name():
+                self._dialog.set_action(Gtk.FileChooserAction.SELECT_FOLDER)
+                for flt in self._dialog.list_filters():
+                    self._dialog.remove_filter(flt)
+            else:
+                self._dialog.set_action(Gtk.FileChooserAction.OPEN)
+
+                audio_filter = Gtk.FileFilter()
+                audio_filter.set_name("Audio Files")
+                audio_filter.add_pattern("*.mp3")
+                self._dialog.set_filter(audio_filter)
+
+    def run(self):
+        resp = super().run(destroy=False)
+        try:
+            if resp == Gtk.ResponseType.CANCEL:
+                return None
+            else:
+                return self._dialog.get_filenames()
+        finally:
+            self._dialog.destroy()
+
+
+class NothingToDoDialog(Dialog):
+    def __init__(self):
+        super().__init__("nothing_to_do_dialog")

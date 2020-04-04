@@ -7,7 +7,7 @@ from eyed3.utils import formatTime, formatSize
 
 from .config import getState
 from .utils import eyed3_load, eyed3_load_dir
-from .dialogs import Dialog, FileSaveDialog, AboutDialog
+from .dialogs import Dialog, FileSaveDialog, AboutDialog, FileChooserDialog, NothingToDoDialog
 from .editorctl import EditorControl
 from .filesctl import FileListControl
 
@@ -90,8 +90,15 @@ class MopWindow:
         self._editor_control = EditorControl(self._file_list_control, builder)
 
     def show(self):
-        audio_files = []
+        # Restore last window size and position
+        app_state = getState()
+        if None not in app_state.main_window_position:
+            self.window.move(*app_state.main_window_position)
+        if None not in app_state.main_window_size:
+            self.window.resize(*app_state.main_window_size)
 
+        # Load files
+        audio_files = []
         if not self._args.path_args:
             self._onDirectoryOpen(None)
         else:
@@ -105,18 +112,16 @@ class MopWindow:
 
             self._file_list_control.setFiles(audio_files)
 
-        # Restore last window size and position
-        app_state = getState()
-        if None not in app_state.main_window_position:
-            self.window.move(*app_state.main_window_position)
-        if None not in app_state.main_window_size:
-            self.window.resize(*app_state.main_window_size)
-
         if self._file_list_control.current_audio_file:
             # Not using show_all here since some widgets may have hidden
             self._window.show()
         else:
-            raise FileNotFoundError("Nothing to do")
+            if NothingToDoDialog().run() == Gtk.ResponseType.OK:
+                # Clear path args that failed to load
+                self._args.path_args = None
+                self.show()
+            else:
+                raise FileNotFoundError("Nothing to do")
 
     @property
     def window(self):
@@ -166,42 +171,23 @@ class MopWindow:
         self._file_list_control.list_store.updateRow(audio_file)
 
     def _onDirectoryOpen(self, _):
-        # FIXME: wip select files or dirs
         '''
         builder = Gtk.Builder()
         builder.add_from_file(str(Path(__file__).parent / "dialogs.ui"))
         dialog = builder.get_object("file_open_dialog")
         '''
-        dialog = Gtk.FileChooserDialog(
-            "Please select files or directories to load", self._window,
-            Gtk.FileChooserAction.OPEN | Gtk.FileChooserAction.SELECT_FOLDER,
-            (Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL,
-             Gtk.STOCK_OPEN, Gtk.ResponseType.OK)
-        )
-        dialog.set_select_multiple(True)
-
-        '''
-        ffilter = Gtk.FileFilter()
-        ffilter.set_name("Audio Files")
-        ffilter.add_pattern("*.mp3")
-        dialog.add_filter(ffilter)
-        '''
+        dialog = FileChooserDialog(self._window)
 
         audio_files = []
-        try:
-            response = dialog.run()
-            if response == Gtk.ResponseType.OK:
-                for d in dialog.get_filenames():
-                    path = Path(d)
-                    print("PATH:", path)
-                    if path.is_dir():
-                        dir_files = eyed3_load_dir(d)
-                        audio_files += dir_files
-                    else:
-                        if audio_file := eyed3_load(path):
-                            audio_files.append(audio_file)
-        finally:
-            dialog.destroy()
+        filenames = dialog.run()
+        for f in filenames or []:
+            path = Path(f)
+            if path.is_dir():
+                dir_files = eyed3_load_dir(f)
+                audio_files += dir_files
+            else:
+                if audio_file := eyed3_load(path):
+                    audio_files.append(audio_file)
 
         if audio_files:
             self._file_list_control.setFiles(audio_files)
