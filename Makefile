@@ -73,7 +73,7 @@ dist: clean sdist bdist
 	@ls -l dist
 
 requirements:
-	./parcyl.py requirements
+	./parcyl.py requirements -RC
 
 install-requirements:
 	pip install -r requirements/requirements.txt

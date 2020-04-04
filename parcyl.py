@@ -6,6 +6,7 @@ import logging
 import warnings
 import functools
 import setuptools
+import subprocess
 import configparser
 from enum import Enum
 from pathlib import Path
@@ -19,6 +20,7 @@ from setuptools.command.test import test as _TestCommand
 from setuptools.command.develop import develop as _DevelopCommand
 from setuptools.command.install import install as _InstallCommand
 
+# FIXME: dup'd in setup.cfg, which should be the source of truth
 VERSION = "1.0a4"
 
 _EXTRA = "extra_"
@@ -393,10 +395,7 @@ class SetupRequirements:
 
         return reqs
 
-    def write(self, include_extras=True, groups=None):
-        if not _REQ_D.exists():
-            raise NotADirectoryError(str(_REQ_D))
-
+    def iterReqs(self, groups=None):
         groups = groups or list([k for k in self._req_dict.keys()
                                     if self._req_dict[k] and (k in self.GROUPS or
                                                               k.startswith(_EXTRA))
@@ -404,20 +403,29 @@ class SetupRequirements:
 
         for req_grp in [k for k in self._req_dict.keys() if self._req_dict[k] and k in groups]:
             # Individual requirements files
-            RequirementsDotText(_REQ_D / f"{req_grp}.txt",
-                                reqs=self._req_dict[req_grp], pins=self.pins)\
-                    .write()
+            yield RequirementsDotText(_REQ_D / f"{req_grp}.txt", reqs=self._req_dict[req_grp],
+                                      pins=self.pins)
 
-        if "requirements" in groups:
+    def write(self, groups=None, requirements_txt=False):
+        if not _REQ_D.exists():
+            raise NotADirectoryError(str(_REQ_D))
+
+        for reqs_txt in self.iterReqs(groups=groups):
+            reqs_txt.write()
+
+        # TODO: Future option of not including extras
+        include_extras = True
+
+        if requirements_txt:
             # Make top-level requirements.txt files
             pkg_reqs = []
             for name, pkgs in self._req_dict.items():
                 if name == "install" or (name.startswith(self._EXTRA) and include_extras):
                     pkg_reqs += pkgs or []
 
-            if pkg_reqs and "requirements" in groups:
-                RequirementsDotText("requirements/requirements.txt",
-                                    reqs=pkg_reqs, pins=self.pins).write()
+            if pkg_reqs:
+                RequirementsDotText("requirements/requirements.txt", reqs=pkg_reqs,
+                                    pins=self.pins).write()
 
     def __bool__(self):
         return bool(self._req_dict)
@@ -585,6 +593,11 @@ def parseVersion(v):
     return ver, ver_info
 
 
+def _pipCompile(path):
+    print(f"Compiling {path}...")
+    subprocess.run(f"pip-compile --annotate --upgrade -o {path} {path}", shell=True, check=True)
+
+
 def _main():
     import argparse
 
@@ -600,6 +613,10 @@ def _main():
                                 help="Generate requirement files (setup.cfg -> *.txt)")
     reqs_p.add_argument("req_group", action="store", nargs="*",
                         help="Which requirements group/file to operate on.")
+    reqs_p.add_argument("-R", "--requirements.txt", dest="requirements_txt", action="store_true",
+                        help="Write a requirements.txt file composed of install and all extras.")
+    reqs_p.add_argument("-C", "--compile", dest="compile", action="store_true",
+                        help="Compile requirement files.")
 
     args = p.parse_args()
 
@@ -617,8 +634,12 @@ def _main():
         try:
             req = SetupRequirements()
             if req:
-                req.write(groups=args.req_group or None)
-        except RequirementParseError as req_err:
+                req.write(groups=args.req_group or None, requirements_txt=args.requirements_txt)
+
+            if args.compile:
+                for req_txt in req.iterReqs(groups=args.req_group or None):
+                    _pipCompile(req_txt.filepath)
+        except (RequirementParseError, subprocess.CalledProcessError) as req_err:
             print(req_err, file=sys.stderr)
             return 1
 
