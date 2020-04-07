@@ -12,6 +12,6 @@ nicfit.py==0.8.6          # via -r requirements/install.txt
 packaging==20.3           # via deprecation
 pycairo==1.19.1           # via pygobject
 pygobject==3.36.0         # via -r requirements/install.txt
-pyparsing==2.4.6          # via packaging
+pyparsing==2.4.7          # via packaging
 pyyaml==5.3.1             # via nicfit.py
 six==1.14.0               # via packaging

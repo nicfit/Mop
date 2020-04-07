@@ -6,7 +6,7 @@
 #
 appdirs==1.4.3            # via virtualenv
 bleach==3.1.4             # via readme-renderer
-certifi==2019.11.28       # via requests
+certifi==2020.4.5.1       # via requests
 cffi==1.14.0              # via cryptography
 chardet==3.0.4            # via requests
 click==7.1.1              # via pip-tools
@@ -28,7 +28,7 @@ pycparser==2.20           # via cffi
 pygments==2.6.1           # via readme-renderer
 pygobject-stubs==0.0.2    # via -r requirements/dev.txt
 pygobject==3.36.0         # via pygobject-stubs
-pyparsing==2.4.6          # via packaging
+pyparsing==2.4.7          # via packaging
 readme-renderer==25.0     # via twine
 requests-toolbelt==0.9.1  # via twine
 requests==2.23.0          # via requests-toolbelt, twine
