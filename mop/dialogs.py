@@ -86,40 +86,66 @@ class AboutDialog(Gtk.AboutDialog):
 
 
 class FileChooserDialog(Dialog):
-    def __init__(self, parent):
+    def __init__(self, current_dir=None, action=Gtk.FileChooserAction.SELECT_FOLDER):
         super().__init__("file_chooser_dialog")
-        self._dialog.set_parent(parent)
+        action = action if action is not None else Gtk.FileChooserAction.SELECT_FOLDER
+
+        if current_dir:
+            self._dialog.set_current_folder(current_dir)
+        self._dialog.set_select_multiple(True)
 
         for radiobutton in ("file_chooser_open_dirs_radiobutton",
                             "file_chooser_open_files_radiobutton"):
-            self._builder.get_object(radiobutton).connect("toggled", self._onActionChange)
-        self._builder.get_object("file_chooser_open_dirs_radiobutton").toggled()
+            radiobutton = self._builder.get_object(radiobutton)
+            radiobutton.connect("toggled", self._onActionChange)
+            if f"_{self.actionToSting(action)}_" in radiobutton.get_name():
+                radiobutton.set_active(True)
+                self._setAction(action)
 
-        self._dialog.set_select_multiple(True)
+    def _setAction(self, action):
+        print("ACTION2", action)
+
+        if action == Gtk.FileChooserAction.SELECT_FOLDER:
+            #for flt in self._dialog.list_filters():
+            #    self._dialog.remove_filter(flt)
+            ...
+        else:
+            #audio_filter = Gtk.FileFilter()
+            #audio_filter.set_name("Audio Files")
+            #audio_filter.add_pattern("*.mp3")
+            #self._dialog.set_filter(audio_filter)
+            ...
+
+        self._dialog.set_action(action)
 
     def _onActionChange(self, radiobutton):
         if radiobutton.get_active():
             if "_dirs_" in radiobutton.get_name():
-                self._dialog.set_action(Gtk.FileChooserAction.SELECT_FOLDER)
-                for flt in self._dialog.list_filters():
-                    self._dialog.remove_filter(flt)
+                self._setAction(Gtk.FileChooserAction.SELECT_FOLDER)
             else:
-                self._dialog.set_action(Gtk.FileChooserAction.OPEN)
-
-                audio_filter = Gtk.FileFilter()
-                audio_filter.set_name("Audio Files")
-                audio_filter.add_pattern("*.mp3")
-                self._dialog.set_filter(audio_filter)
+                self._setAction(Gtk.FileChooserAction.OPEN)
 
     def run(self):
         resp = super().run(destroy=False)
         try:
             if resp == Gtk.ResponseType.CANCEL:
-                return None
+                return None, None
             else:
-                return self._dialog.get_filenames()
+                return self._dialog.get_filenames(), self._dialog.get_action()
         finally:
             self._dialog.destroy()
+
+    @staticmethod
+    def actionToSting(action):
+        return "dirs" if action == Gtk.FileChooserAction.SELECT_FOLDER else "files"
+
+    @staticmethod
+    def stringToAction(action_str):
+        return Gtk.FileChooserAction.SELECT_FOLDER if action_str == "dirs" \
+                                                   else Gtk.FileChooserAction.OPEN
+
+    def connect(self, *args):
+        self._dialog.connect(*args)
 
 
 class NothingToDoDialog(Dialog):

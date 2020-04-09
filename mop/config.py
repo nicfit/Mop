@@ -4,11 +4,16 @@ import json
 import textwrap
 import importlib
 from pathlib import Path
+from typing import Tuple
+from dataclasses import dataclass, fields
+
 
 __all__ = ["CONFIG_DIR", "Config", "getConfig", "getState"]
 
 CONFIG_DIR = Path("~/.config/Mop/").expanduser()
 CACHE_DIR = Path("~/.cache/Mop/").expanduser()
+DEFAULT_STATE_FILE = CACHE_DIR / "mop.json"
+
 # Global config and state
 _config = None
 _state = None
@@ -87,56 +92,41 @@ def getConfig() -> Config:
     return _config
 
 
-class State:
-    DEFAULT_PATH = CACHE_DIR / "mop.json"
-    MAIN_WINDOW = "main_window"
+@dataclass
+class AppState:
+    main_window_pos: Tuple[int, int] = None
+    main_window_size: Tuple[int, int] = None
+    file_open_cwd: str = None
+    file_open_action: str = None
 
-    def __init__(self):
-        self._state_file = _ConfigFile(self.DEFAULT_PATH, default="{}", mode=0o600)
-        self._state = json.load(self._state_file.open())
+    def __post_init__(self):
+        # Convert lists to tuples
+        if type(self.main_window_size) is list:
+            self.main_window_size = tuple(self.main_window_size)
+        if type(self.main_window_pos) is list:
+            self.main_window_pos = tuple(self.main_window_pos)
 
-    def save(self):
-        self._state_file.write_text(json.dumps(self._state), "utf8")
+    def save(self, filename):
+        state = {}
+        for field in fields(self):
+            value = getattr(self, field.name)
+            state[field.name] = value
+        Path(filename).write_text(json.dumps(state), "utf8")
 
-    @property
-    def main_window_size(self) -> tuple:
-        return self._getMainWindowTuple(("width", "height"))
-
-    @main_window_size.setter
-    def main_window_size(self, size: tuple) -> None:
-        self._setMainWindowTuple(("width", "height"), size)
-
-    @property
-    def main_window_position(self) -> tuple:
-        return self._getMainWindowTuple(("x", "y"))
-
-    @main_window_position.setter
-    def main_window_position(self, pos: tuple) -> None:
-        self._setMainWindowTuple(("x", "y"), pos)
-
-    def _getMainWindowTuple(self, what: tuple) -> tuple:
-        if self.MAIN_WINDOW not in self._state:
-            self._state[self.MAIN_WINDOW] = {}
-
-        return (self._state[self.MAIN_WINDOW].get(what[0], None),
-                self._state[self.MAIN_WINDOW].get(what[1], None))
-
-    def _setMainWindowTuple(self, what: tuple, value: tuple) -> None:
-        if self.MAIN_WINDOW not in self._state:
-            self._state[self.MAIN_WINDOW] = {}
-
-        for i in (0, 1):
-            if value[i] is None and what[i] in self._state[self.MAIN_WINDOW]:
-                del self._state[self.MAIN_WINDOW][what[i]]
-            else:
-                self._state[self.MAIN_WINDOW][what[i]] = value[i]
+    @classmethod
+    def load(Class, filename):
+        cache_file = Path(filename)
+        if cache_file.exists():
+            state_json = json.loads(Path(filename).read_text())
+            return Class(**state_json)
+        else:
+            return Class()
 
 
-def getState() -> State:
+def getState() -> AppState:
     """Get application state instance"""
     global _state
 
     if _state is None:
-        _state = State()
+        _state = AppState.load(DEFAULT_STATE_FILE)
     return _state
-

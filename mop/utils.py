@@ -56,3 +56,7 @@ def eyed3_load_dir(audio_dir) -> list:
         handler = FileHandler()
         eyed3.utils.walk(handler, audio_dir, recursive=True)
         return handler.audio_files
+
+
+def escapeMarkup(s: str) -> str:
+    return s.replace("&", "&amp;")

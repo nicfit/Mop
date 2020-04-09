@@ -5,8 +5,8 @@ from gi.repository import Gtk
 
 from eyed3.utils import formatTime, formatSize
 
-from .config import getState
-from .utils import eyed3_load, eyed3_load_dir
+from .config import getState, DEFAULT_STATE_FILE
+from .utils import eyed3_load, eyed3_load_dir, escapeMarkup
 from .dialogs import Dialog, FileSaveDialog, AboutDialog, FileChooserDialog, NothingToDoDialog
 from .editorctl import EditorControl
 from .filesctl import FileListControl
@@ -61,8 +61,8 @@ class MopApp:
     def _updateState(self):
         app_state = getState()
         app_state.main_window_size = self._main_window.window.get_size()
-        app_state.main_window_position = self._main_window.window.get_position()
-        app_state.save()
+        app_state.main_window_pos = self._main_window.window.get_position()
+        app_state.save(DEFAULT_STATE_FILE)
 
 
 class MopWindow:
@@ -92,9 +92,9 @@ class MopWindow:
     def show(self):
         # Restore last window size and position
         app_state = getState()
-        if None not in app_state.main_window_position:
-            self.window.move(*app_state.main_window_position)
-        if None not in app_state.main_window_size:
+        if app_state.main_window_pos is not None:
+            self.window.move(*app_state.main_window_pos)
+        if app_state.main_window_size is not None:
             self.window.resize(*app_state.main_window_size)
 
         # Load files
@@ -171,15 +171,16 @@ class MopWindow:
         self._file_list_control.list_store.updateRow(audio_file)
 
     def _onDirectoryOpen(self, _):
-        '''
-        builder = Gtk.Builder()
-        builder.add_from_file(str(Path(__file__).parent / "dialogs.ui"))
-        dialog = builder.get_object("file_open_dialog")
-        '''
-        dialog = FileChooserDialog(self._window)
+        state = getState()
+        dialog = FileChooserDialog(state.file_open_cwd,
+                                   FileChooserDialog.stringToAction(state.file_open_action))
+
+        def trackCurrentFolder(file_chooser):
+            state.file_open_cwd = file_chooser.get_current_folder()
+        dialog.connect("current-folder-changed", trackCurrentFolder)
 
         audio_files = []
-        filenames = dialog.run()
+        filenames, action = dialog.run()
         for f in filenames or []:
             path = Path(f)
             if path.is_dir():
@@ -191,6 +192,8 @@ class MopWindow:
 
         if audio_files:
             self._file_list_control.setFiles(audio_files)
+
+        state.file_open_action = dialog.actionToSting(action)
 
     def shutdown(self):
         if self._file_list_control.is_dirty:
@@ -230,7 +233,7 @@ class MopWindow:
             return
 
         # File info
-        self._file_path_label.set_markup(f"<b>Path:</b> {audio_file.path}")
+        self._file_path_label.set_markup(escapeMarkup(f"<b>Path:</b> {audio_file.path}"))
         self._file_size_label.set_markup(
             f"<b>Size:</b>  {formatSize(audio_file.info.size_bytes)}"
             f"  [{formatSize(list_control.total_size_bytes)} total]"

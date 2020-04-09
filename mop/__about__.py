@@ -1,8 +1,8 @@
 import dataclasses
 
 project_name = "Mop"
-version      = "0.1.1"
-release_name = "Avalanche Master Song"
+version      = "0.1.2"
+release_name = "Brown Sugar"
 author       = "Travis Shirk"
 author_email = "travis@pobox.com"
 years        = "2020"
