@@ -272,7 +272,7 @@ class DateEditorWidget(EntryEditorWidget):
         retval = super().init(tag)
 
         if tag.version < ID3_V2_4 and self._name == "tag_original_release_date_entry":
-            # Release date is only supported in ID3 2.4
+            # Original release date is only supported in ID3 2.4
             self._setSensitive(False, "Original release date requires ID3 v2.4")
         elif tag.isV1() and self._name == "tag_recording_date_entry":
             # Recording date is only supported in ID3 2
@@ -423,7 +423,7 @@ class TagVersionChoiceWidget(EditorWidget):
 
         self.id3_versions = {
             ".".join([str(x) for x in v]): (v, f"ID3 {id3.versionToString(v)}")
-            for v in (ID3_V2_4, ID3_V2_3, ID3_V1_1, ID3_V1_0)
+            for v in (ID3_V2_4, ID3_V2_3, ID3_V2_2, ID3_V1_1, ID3_V1_0)
         }
 
     def init(self, selected, other):

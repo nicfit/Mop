@@ -3,6 +3,7 @@ import logging
 from pathlib import Path
 from gi.repository import Gtk
 
+from eyed3.id3 import ID3_V2_2, ID3_V2_4
 from eyed3.utils import formatTime, formatSize
 
 from .config import getState, DEFAULT_STATE_FILE
@@ -149,10 +150,19 @@ class MopWindow:
                     if tag and tag.is_dirty:
                         self._saveTag(audio_file, tag, opts["version"])
 
+        # Restored current edit based on file list selection.
+        self._editor_control.edit(self._file_list_control.current_audio_file)
+
     def _saveTag(self, audio_file, tag, id3_version):
-        assert tag
+        assert tag is not None
         assert tag.is_dirty
+        assert id3_version != ID3_V2_2
         main_tag = audio_file.tag
+
+        if tag.version == ID3_V2_2 and id3_version is None:
+            # Cannot save v2.2
+            id3_version = ID3_V2_4
+
         try:
             log.debug(f"Saving tag {audio_file.path}, {id3_version=}")
             audio_file.tag = tag
