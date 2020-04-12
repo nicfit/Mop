@@ -2,7 +2,7 @@ import logging
 from functools import partial
 from contextlib import contextmanager
 from eyed3 import id3, core
-from eyed3.id3 import ID3_V1_0, ID3_V1_1, ID3_V2_3, ID3_V2_4, Genre
+from eyed3.id3 import ID3_V1_0, ID3_V1_1, ID3_V2_2, ID3_V2_3, ID3_V2_4, Genre
 from eyed3.id3.tag import ID3_V1_MAX_TEXTLEN, ID3_V1_COMMENT_DESC
 from gi.repository import GObject, Gtk, Gdk
 
@@ -487,6 +487,7 @@ class EditorControl(GObject.GObject):
         self._notebook.get_nth_page(self.IMAGES_PAGE).hide()
 
         self._edit_prefer_v1_checkbutton = builder.get_object("default_prefer_v1_checkbutton")
+        self._edit_prefer_v1_checkbutton.connect("toggled", lambda _: self.edit(self.current_edit))
 
         self._editor_widgets = {}
         for widget_name in (
@@ -572,7 +573,7 @@ class EditorControl(GObject.GObject):
                         log.debug("Setting tag_dirty2")
                         tag.is_dirty = True
                         self._file_list_ctl.list_store.updateRow(audio_file)
-                    i += 1
+                i += 1
         elif editor_widget == track_total_entry:
             # Track total -> len(audio_files) ...
             all_files = list(self._file_list_ctl.list_store.iterAudioFiles())
@@ -600,6 +601,8 @@ class EditorControl(GObject.GObject):
                 audio_file.selected_tag = tag1
         else:
             audio_file.selected_tag = tag
+
+        self._edit_prefer_v1_checkbutton.set_visible(bool(tag2))
 
         assert audio_file.selected_tag in (tag1, tag2)
 
