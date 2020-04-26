@@ -31,10 +31,9 @@ def eyed3_load(path) -> Optional[AudioFile]:
             if v1_audio_file.tag:
                 log.debug("Found extra v1 tag")
                 audio_file.second_v1_tag = v1_audio_file.tag
-                audio_file.second_v1_tag.is_dirty = False
 
         # Add flag for tracking edits
-        audio_file.tag.is_dirty = False
+        audio_file.is_dirty = False
 
         return audio_file
     else:

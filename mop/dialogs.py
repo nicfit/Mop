@@ -102,19 +102,26 @@ class FileChooserDialog(Dialog):
                 radiobutton.set_active(True)
                 self._setAction(action)
 
-    def _setAction(self, action):
-        print("ACTION2", action)
+        # FIXME: WIP
+        #audio_filter = Gtk.FileFilter()
+        #audio_filter.set_name("Audio Files")
+        #audio_filter.add_pattern("*.mp3")
+        #self._dialog.set_filter(audio_filter)
 
+    def _setAction(self, action):
+        print(list(self._dialog.list_filters()))
         if action == Gtk.FileChooserAction.SELECT_FOLDER:
-            #for flt in self._dialog.list_filters():
-            #    self._dialog.remove_filter(flt)
-            ...
+            '''
+            for flt in list(self._dialog.list_filters()):
+                self._dialog.remove_filter(flt)
+            '''
         else:
-            #audio_filter = Gtk.FileFilter()
-            #audio_filter.set_name("Audio Files")
-            #audio_filter.add_pattern("*.mp3")
-            #self._dialog.set_filter(audio_filter)
-            ...
+            '''
+            audio_filter = Gtk.FileFilter()
+            audio_filter.set_name("Audio Files")
+            audio_filter.add_pattern("*.mp3")
+            self._dialog.set_filter(audio_filter)
+            '''
 
         self._dialog.set_action(action)
 
@@ -131,7 +138,8 @@ class FileChooserDialog(Dialog):
             if resp == Gtk.ResponseType.CANCEL:
                 return None, None
             else:
-                return self._dialog.get_filenames(), self._dialog.get_action()
+                # XXX: tuple retval, blech
+                return list(sorted(self._dialog.get_filenames())), self._dialog.get_action()
         finally:
             self._dialog.destroy()
 

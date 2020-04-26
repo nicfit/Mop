@@ -146,8 +146,8 @@ class MopWindow:
         resp, opts = FileSaveDialog().run()
         if resp == Gtk.ResponseType.OK:
             for audio_file in files:
-                for tag in (audio_file.tag, audio_file.second_v1_tag):
-                    if tag and tag.is_dirty:
+                if audio_file.is_dirty:
+                    for tag in (audio_file.tag, audio_file.second_v1_tag):
                         self._saveTag(audio_file, tag, opts["version"])
 
         # Restored current edit based on file list selection.
@@ -155,7 +155,6 @@ class MopWindow:
 
     def _saveTag(self, audio_file, tag, id3_version):
         assert tag is not None
-        assert tag.is_dirty
         assert id3_version != ID3_V2_2
         main_tag = audio_file.tag
 
@@ -173,7 +172,7 @@ class MopWindow:
             else:
                 audio_file.tag.save()
 
-            audio_file.tag.is_dirty = False
+            audio_file.is_dirty = False
         finally:
             audio_file.tag = main_tag
 

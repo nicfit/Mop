@@ -47,8 +47,7 @@ class AudioFileListStore:
             n, t = tag.track_num
             return f"{n or ''}{'/' if t else ''}{t or ''}"
 
-        dirty = (audio_file.tag and audio_file.tag.is_dirty) or \
-                (audio_file.second_v1_tag and audio_file.second_v1_tag.is_dirty)
+        dirty = audio_file.is_dirty
 
         tag = audio_file.selected_tag or audio_file.tag
         return [
@@ -150,8 +149,7 @@ class FileListControl(GObject.GObject):
     def dirty_files(self):
         curr_files = self.list_store._audio_files.values() \
                         if self.list_store._audio_files is not None else []
-        return [af for af in curr_files if af.tag.is_dirty or (af.second_v1_tag and
-                                                               af.second_v1_tag.is_dirty)]
+        return [af for af in curr_files if af.is_dirty]
 
     def setFiles(self, audio_files: list):
         self.total_size_bytes, self.total_time_secs = 0, 0

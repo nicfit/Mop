@@ -5,7 +5,7 @@
 #    pip-compile --output-file=requirements/install.txt requirements/install.txt
 #
 attrs==19.3.0             # via nicfit.py
-deprecation==2.0.7        # via eyed3, nicfit.py
+deprecation==2.1.0        # via eyed3, nicfit.py
 eyed3==0.9.5              # via -r requirements/install.txt
 filetype==1.0.6           # via eyed3
 nicfit.py==0.8.6          # via -r requirements/install.txt
