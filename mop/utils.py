@@ -24,6 +24,7 @@ def eyed3_load(path) -> Optional[AudioFile]:
         audio_file.selected_tag = None
 
         if audio_file.tag is None:
+            # TODO: use default version preference
             audio_file.initTag()
         elif audio_file.tag.isV2():
             # v2 preferred, but there may also be an ID3 v1 tag
