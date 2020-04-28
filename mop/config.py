@@ -4,8 +4,11 @@ import json
 import textwrap
 import importlib
 from pathlib import Path
+from logging import getLogger
 from typing import Tuple
 from dataclasses import dataclass, fields
+
+log = getLogger(__name__)
 
 
 __all__ = ["CONFIG_DIR", "Config", "getConfig", "getState"]
@@ -64,20 +67,21 @@ class _PyConfig(_Config):
         super().__init__(self.DEFAULT_PATH, default=self.DEFAULT_CONFIG)
 
         sys_path = list(sys.path)
+        sys.path.append(str(self._cfg_file.parent.resolve()))
         try:
-            sys.path.append(str(self._cfg_file.parent.resolve()))
             self._cfg_mod = importlib.import_module(self._cfg_file.stem)
-        finally:
-            sys.path.clear()
-            sys.path.extend(sys_path)
+        except Exception as ex:
+            log.error(f"Config file parse error: {ex}", exc_info=ex)
+            self._cfg_mod = None
+
+        sys.path.clear()
+        sys.path.extend(sys_path)
 
     def __getattr__(self, attr):
-        # Config module first
-        if hasattr(self._cfg_mod, attr):
+        # Remember, the is only call for attrs not found thru normal means
+        if self._cfg_file and hasattr(self._cfg_mod, attr):
             return getattr(self._cfg_mod, attr)
-        # Self second
-        else:
-            return super().__getattr__(attr)
+        return None
 
 
 Config = _PyConfig

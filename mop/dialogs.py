@@ -48,12 +48,8 @@ class FileSaveDialog(Dialog):
     def __init__(self, audio_files):
         super().__init__("file_save_dialog")
 
-        # FIXME: update for new
-        pref_version = getConfig().preferred_id3_version or ID3_ANY_VERSION
-        #if pref_version == ID3_ANY_VERSION:
-        #    active_version = "vCurrent"
-        #else:
-        #    active_version = versionToString(pref_version).replace(".", "")
+        pref_v1_version = getConfig().preferred_id3_v1_version or ID3_V1_1
+        pref_v2_version = getConfig().preferred_id3_v2_version or ID3_V2_4
 
         self._save_v2_checkbutton = self._builder.get_object("save_id3v2_checkbutton")
         self._save_v1_checkbutton = self._builder.get_object("save_id3v1_checkbutton")
@@ -83,12 +79,11 @@ class FileSaveDialog(Dialog):
                                             if fid.startswith(b"T")]:
                         v2_encodings[text_frame.encoding] += 1
 
-        # TODO: use default version preferences
         default_v1_version = v1_versions.most_common()[0][0] \
-                                if v1_versions.most_common() else ID3_V1_1
+                                if v1_versions.most_common() else pref_v1_version
         log.debug(f"Most common v1 versions: {default_v1_version}")
         default_v2_version = v2_versions.most_common()[0][0] \
-                                if v2_versions.most_common() else ID3_V2_4
+                                if v2_versions.most_common() else pref_v2_version
         log.debug(f"Most common v2 versions: {default_v2_version}")
         default_v2_encoding = v2_encodings.most_common()[0][0] \
                                 if v2_encodings.most_common() else None
@@ -127,9 +122,9 @@ class FileSaveDialog(Dialog):
                         v2_enc_combo.set_active(i)
                         break
             else:
+                # TODO: use default encoding preference if most_common is empty; based if off active version
                 v2_enc_combo.set_active(0)
 
-        # TODO: use default encoding preference if most_common is empty; based if off active version
         initEncodings(v2_enc_combo, default_v2_version, default_v2_encoding)
         v2_combo.connect("changed",
                          lambda *args: initEncodings(v2_combo, None, None))
@@ -194,7 +189,7 @@ class AboutDialog(Gtk.AboutDialog):
                           f"eyeD3 {eyeD3_version}")
         # TODO: Get URL from __about__
         self.set_website_label("GitHub")
-        self.set_website("https://github.com/nicfit/mop")
+        self.set_website("https://github.com/nicfit/Mop")
         # TODO:
         #self.set_logo()
         #self.set_artists()
