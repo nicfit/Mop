@@ -58,9 +58,10 @@ class _Config:
 class _PyConfig(_Config):
     DEFAULT_PATH = CONFIG_DIR / "mop_cfg.py"
     DEFAULT_CONFIG = textwrap.dedent("""
-    from eyed3.id3 import ID3_ANY_VERSION, ID3_V2_4, ID3_V2_3, ID3_V1_1, ID3_V1_0
+    from eyed3.id3 import ID3_V2_4, ID3_V1_1
 
-    preferred_id3_version = ID3_ANY_VERSION
+    preferred_id3_v1_version = ID3_1_1
+    preferred_id3_v2_version = ID3_2_4
     """).lstrip()
 
     def __init__(self):
