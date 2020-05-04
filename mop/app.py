@@ -3,10 +3,10 @@ import logging
 from pathlib import Path
 from gi.repository import Gtk
 
-from eyed3.id3 import ID3_V1, ID3_V2, ID3_V2_2, ID3_V2_4, Tag
+from eyed3.id3 import ID3_V1, ID3_V2, ID3_V2_2, ID3_DEFAULT_VERSION, Tag
 from eyed3.utils import formatTime, formatSize
 
-from .config import getState, DEFAULT_STATE_FILE
+from .config import getState, DEFAULT_STATE_FILE, getConfig
 from .utils import eyed3_load, eyed3_load_dir, escapeMarkup
 from .dialogs import Dialog, FileSaveDialog, AboutDialog, FileChooserDialog, NothingToDoDialog
 from .editorctl import EditorControl
@@ -177,7 +177,7 @@ class MopWindow:
         # No tags to save, nothing to do.
         if (opts.id3_v1_version, opts.id3_v2_version) == (None, None):
             # Not tags in file, but need a tag to keep the editor working...
-            audio_file.initTag()
+            audio_file.initTag(getConfig().preferred_id3_version or ID3_DEFAULT_VERSION)
             audio_file.is_dirty = False
             self._editor_control.edit(audio_file)
             return

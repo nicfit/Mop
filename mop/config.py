@@ -60,8 +60,9 @@ class _PyConfig(_Config):
     DEFAULT_CONFIG = textwrap.dedent("""
     from eyed3.id3 import ID3_V2_4, ID3_V1_1
 
-    preferred_id3_v1_version = ID3_1_1
-    preferred_id3_v2_version = ID3_2_4
+    preferred_id3_v1_version = ID3_V1_1
+    preferred_id3_v2_version = ID3_V2_4
+    preferred_id3_version = preferred_id3_v2_version
     """).lstrip()
 
     def __init__(self):
