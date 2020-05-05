@@ -3,10 +3,10 @@ import logging
 from pathlib import Path
 from gi.repository import Gtk
 
-from eyed3.id3 import ID3_V2_2, ID3_V2_4
+from eyed3.id3 import ID3_V1, ID3_V2, ID3_V2_2, ID3_DEFAULT_VERSION, Tag
 from eyed3.utils import formatTime, formatSize
 
-from .config import getState, DEFAULT_STATE_FILE
+from .config import getState, DEFAULT_STATE_FILE, getConfig
 from .utils import eyed3_load, eyed3_load_dir, escapeMarkup
 from .dialogs import Dialog, FileSaveDialog, AboutDialog, FileChooserDialog, NothingToDoDialog
 from .editorctl import EditorControl
@@ -143,41 +143,78 @@ class MopWindow:
 
         files = list(self._file_list_control.dirty_files)
 
-        resp, opts = FileSaveDialog().run()
+        resp, opts = FileSaveDialog(files).run()
         if resp == Gtk.ResponseType.OK:
             for audio_file in files:
                 if audio_file.is_dirty:
-                    for tag in (audio_file.tag, audio_file.second_v1_tag):
-                        self._saveTag(audio_file, tag, opts["version"])
+                    self._saveAudioFile(audio_file, opts)
 
         # Restored current edit based on file list selection.
-        self._editor_control.edit(self._file_list_control.current_audio_file)
 
-    def _saveTag(self, audio_file, tag, id3_version):
-        assert tag is not None
-        assert id3_version != ID3_V2_2
-        main_tag = audio_file.tag
+    def _saveAudioFile(self, audio_file, opts):
+        assert audio_file is not None and audio_file.tag is not None
+        assert opts.id3_v2_version != ID3_V2_2
 
-        if tag.version == ID3_V2_2 and id3_version is None:
-            # Cannot save v2.2
-            id3_version = ID3_V2_4
+        v2_tag = audio_file.tag if audio_file.tag.isV2() else None
+        v1_tag = audio_file.tag if v2_tag is None and audio_file.tag.isV1() \
+            else audio_file.second_v1_tag
+
+        assert v2_tag is None or v2_tag.isV2()
+        assert v1_tag is None or v1_tag.isV1()
+
+        # Handle v1 removes
+        if opts.id3_v1_version is None:
+            if v1_tag:
+                log.info("Removing v1 tag")
+                Tag.remove(audio_file.path, ID3_V1)
+
+        # Handle v2 removes
+        if opts.id3_v2_version is None:
+            if v2_tag:
+                log.info("Removing v2 tag")
+                Tag.remove(audio_file.path, ID3_V2)
+
+        # No tags to save, nothing to do.
+        if (opts.id3_v1_version, opts.id3_v2_version) == (None, None):
+            # Not tags in file, but need a tag to keep the editor working...
+            audio_file.initTag(getConfig().preferred_id3_version or ID3_DEFAULT_VERSION)
+            audio_file.is_dirty = False
+            self._editor_control.edit(audio_file)
+            return
 
         try:
-            log.debug(f"Saving tag {audio_file.path}, {id3_version=}")
-            audio_file.tag = tag
-            if id3_version and id3_version[0] == 1 and tag.isV1():
-                audio_file.tag.save(version=id3_version)
-            elif id3_version and id3_version[0] == 2 and tag.isV2():
-                audio_file.tag.save(version=id3_version)
-            else:
-                audio_file.tag.save()
+            assert v2_tag is None or v2_tag.isV2()
+            assert v1_tag is None or v1_tag.isV1()
+
+            # Save v1
+            if opts.id3_v1_version:
+                save_tag = v1_tag or v2_tag
+                log.debug(f"Saving v1 tag {audio_file.path}, {opts=}")
+                audio_file.tag = save_tag
+                audio_file.tag.save(version=opts.id3_v1_version)
+
+            # Save v2
+            if opts.id3_v2_version:
+                save_tag = v2_tag or v1_tag
+                log.debug(f"Saving v2 tag {audio_file.path}, {opts=}")
+
+                if opts.id3_v2_encoding:
+                    assert type(opts.id3_v2_encoding) is bytes
+                    for frame_list in save_tag.frame_set.values():
+                        for frame in frame_list:
+                            if hasattr(frame, "encoding"):
+                                frame.encoding = opts.id3_v2_encoding
+
+                audio_file.tag = save_tag
+                audio_file.tag.save(version=opts.id3_v2_version)
 
             audio_file.is_dirty = False
-        finally:
-            audio_file.tag = main_tag
 
-        self._editor_control.edit(audio_file)
-        self._file_list_control.list_store.updateRow(audio_file)
+        finally:
+            reload = eyed3_load(audio_file.path)
+            audio_file.tag = reload.tag
+            audio_file.second_v1_tag = reload.second_v1_tag
+            self._editor_control.edit(audio_file)
 
     def _onDirectoryOpen(self, _):
         state = getState()
@@ -204,18 +241,15 @@ class MopWindow:
 
         state.file_open_action = dialog.actionToSting(action)
 
-    def shutdown(self):
+    def shutdown(self) -> bool:
         if self._file_list_control.is_dirty:
             resp = Dialog("quit_confirm_dialog").run()
-
-            if resp in (Gtk.ResponseType.OK, Gtk.ResponseType.CLOSE):
-                if resp == Gtk.ResponseType.OK:
-                    self._onFileSaveAll(None)
-            elif resp == Gtk.ResponseType.CANCEL:
+            if resp == Gtk.ResponseType.CANCEL:
                 # Cancel the shutdown
                 return False
-            else:
-                raise ValueError(f"Quit confirm response: {resp}")
+
+            if resp == Gtk.ResponseType.OK:
+                self._onFileSaveAll(None)
 
         return True
 

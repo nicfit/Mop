@@ -4,8 +4,11 @@ import json
 import textwrap
 import importlib
 from pathlib import Path
+from logging import getLogger
 from typing import Tuple
 from dataclasses import dataclass, fields
+
+log = getLogger(__name__)
 
 
 __all__ = ["CONFIG_DIR", "Config", "getConfig", "getState"]
@@ -55,29 +58,32 @@ class _Config:
 class _PyConfig(_Config):
     DEFAULT_PATH = CONFIG_DIR / "mop_cfg.py"
     DEFAULT_CONFIG = textwrap.dedent("""
-    from eyed3.id3 import ID3_ANY_VERSION, ID3_V2_4, ID3_V2_3, ID3_V1_1, ID3_V1_0
+    from eyed3.id3 import ID3_V2_4, ID3_V1_1
 
-    preferred_id3_version = ID3_ANY_VERSION
+    preferred_id3_v1_version = ID3_V1_1
+    preferred_id3_v2_version = ID3_V2_4
+    preferred_id3_version = preferred_id3_v2_version
     """).lstrip()
 
     def __init__(self):
         super().__init__(self.DEFAULT_PATH, default=self.DEFAULT_CONFIG)
 
         sys_path = list(sys.path)
+        sys.path.append(str(self._cfg_file.parent.resolve()))
         try:
-            sys.path.append(str(self._cfg_file.parent.resolve()))
             self._cfg_mod = importlib.import_module(self._cfg_file.stem)
-        finally:
-            sys.path.clear()
-            sys.path.extend(sys_path)
+        except Exception as ex:
+            log.error(f"Config file parse error: {ex}", exc_info=ex)
+            self._cfg_mod = None
+
+        sys.path.clear()
+        sys.path.extend(sys_path)
 
     def __getattr__(self, attr):
-        # Config module first
-        if hasattr(self._cfg_mod, attr):
+        # Remember, the is only call for attrs not found thru normal means
+        if self._cfg_file and hasattr(self._cfg_mod, attr):
             return getattr(self._cfg_mod, attr)
-        # Self second
-        else:
-            return super().__getattr__(attr)
+        return None
 
 
 Config = _PyConfig
