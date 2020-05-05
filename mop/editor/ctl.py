@@ -19,6 +19,31 @@ class EditorControl(GObject.GObject):
         "tag-changed": (GObject.SIGNAL_RUN_LAST, None, []),
     }
 
+    EDITOR_WIDGETS = {
+        "tag_title_entry": (EntryEditorWidget, None),
+        "tag_artist_entry": (EntryEditorWidget, None),
+        "tag_album_entry": (EntryEditorWidget, None),
+        "tag_track_num_entry": (NumTotalEditorWidget, None),
+        "tag_track_total_entry": (NumTotalEditorWidget, None),
+        "tag_disc_num_entry": (NumTotalEditorWidget, None),
+        "tag_disc_total_entry": (NumTotalEditorWidget, None),
+        "tag_release_date_entry": (DateEditorWidget, None),
+        "tag_recording_date_entry": (DateEditorWidget, None),
+        "tag_original_release_date_entry": (DateEditorWidget, None),
+        "tag_album_type_combo": (AlbumTypeEditorWidget, None),
+        "tag_genre_combo": (GenreEditorWidget, None),
+        "tag_version_combo": (TagVersionChoiceWidget, None),
+        "tag_comment_entry": (SimpleCommentEditorWidget, None),
+        "tag_url_entry": (SimpleUrlEditorWidget, None),
+        # Extras
+        "tag_albumArtist_entry": (EntryEditorWidget, None),
+        "tag_origArtist_entry": (EntryEditorWidget, None),
+        "tag_composer_entry": (EntryEditorWidget, None),
+        "tag_encodedBy_entry": (EntryEditorWidget, None),
+        "tag_publisher_entry": (EntryEditorWidget, None),
+        "tag_copyright_entry": (EntryEditorWidget, None),
+    }
+
     def __init__(self, file_list_ctl, builder):
         super().__init__()
 
@@ -33,45 +58,13 @@ class EditorControl(GObject.GObject):
         self._edit_prefer_v1_checkbutton.connect("toggled", lambda _: self.edit(self.current_edit))
 
         self._editor_widgets = {}
-        for widget_name in (
-                "tag_title_entry", "tag_artist_entry", "tag_album_entry", "tag_comment_entry",
-                "tag_track_num_entry", "tag_track_total_entry",
-                "tag_disc_num_entry", "tag_disc_total_entry",
-                "tag_release_date_entry", "tag_recording_date_entry",
-                "tag_original_release_date_entry",
-                "tag_album_type_combo", "tag_version_combo", "tag_genre_combo",
-                # Extras
-                "tag_albumArtist_entry", "tag_origArtist_entry", "tag_composer_entry",
-                "tag_encodedBy_entry", "tag_publisher_entry", "tag_copyright_entry",
-                "tag_url_entry",
-        ):
-            # Make editor widgets
-            if widget_name == "tag_album_type_combo":
-                editor_widget = AlbumTypeEditorWidget( widget_name, builder, self)
+        for widget_name, (WidgetClass, XXX) in self.EDITOR_WIDGETS.items():
+            editor_widget = WidgetClass(widget_name, builder, self)
+            editor_widget.connect("tag-changed", self._onTagChanged)
+            editor_widget.connect("tag-value-copy", self._onTagValueCopy)
+            editor_widget.connect("tag-value-incr", self._onTagValueIncrement)
 
-            elif widget_name == "tag_genre_combo":
-                editor_widget = GenreEditorWidget(widget_name, builder, self)
-
-            elif widget_name == "tag_version_combo":
-                editor_widget = TagVersionChoiceWidget(widget_name, builder, self)
-
-            elif widget_name in ("tag_track_num_entry", "tag_track_total_entry",
-                                 "tag_disc_num_entry", "tag_disc_total_entry"):
-                editor_widget = NumTotalEditorWidget(widget_name, builder, self)
-            elif widget_name.endswith("_date_entry"):
-                editor_widget = DateEditorWidget(widget_name, builder, self)
-            elif widget_name.endswith("tag_comment_entry"):
-                editor_widget = SimpleCommentEditorWidget(widget_name, builder, self)
-            elif widget_name.endswith("tag_url_entry"):
-                editor_widget = SimpleUrlEditorWidget(widget_name, builder, self)
-            else:
-                editor_widget = EntryEditorWidget(widget_name, builder, self)
-
-            if editor_widget is not None:
-                editor_widget.connect("tag-changed", self._onTagChanged)
-                editor_widget.connect("tag-value-copy", self._onTagValueCopy)
-                editor_widget.connect("tag-value-incr", self._onTagValueIncrement)
-                self._editor_widgets[widget_name] = editor_widget
+            self._editor_widgets[widget_name] = editor_widget
 
     def _onTagChanged(self, *args):
         log.debug(f"_onTagChanged: {args}")
