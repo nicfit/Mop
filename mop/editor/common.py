@@ -129,9 +129,9 @@ class SimpleUrlEditorWidget(SimpleAccessorEditorWidgetABC):
 
 
 class NumTotalEditorWidget(EntryEditorWidget):
-    def __init__(self, name, num_widget, editor_ctl, is_total=False):
-        self._is_total = is_total
-        super().__init__(name, num_widget, editor_ctl)
+    def __init__(self, name, builder, editor_ctl):
+        self._is_total = "total" in name
+        super().__init__(name, builder, editor_ctl)
 
     def _connect(self):
         self.widget.connect("changed", self._onChanged)
@@ -248,9 +248,11 @@ class ComboBoxEditorWidget(EditorWidget):
 
 
 class AlbumTypeEditorWidget(ComboBoxEditorWidget):
-    def __init__(self, name, widget, deep_copy_widget, editor_ctl):
-        self._deep_copy_widget = deep_copy_widget
-        super().__init__(name, widget, editor_ctl)
+    def __init__(self, name, builder, editor_ctl):
+        self._deep_copy_widget = builder.get_object(
+            self._getInternalName("tag_album_type_deepcopy")
+        )
+        super().__init__(name, builder, editor_ctl)
 
         with self._onChangeInactive():
             self.widget.remove_all()
@@ -291,10 +293,10 @@ class AlbumTypeEditorWidget(ComboBoxEditorWidget):
 
 
 class GenreEditorWidget(ComboBoxEditorWidget):
-    def __init__(self, name, widget, deep_copy_widget, editor_ctl):
+    def __init__(self, name, builder, editor_ctl):
         with self._onChangeInactive():
-            self._deep_copy_widget = deep_copy_widget
-            super().__init__(name, widget, editor_ctl)
+            self._deep_copy_widget = builder.get_object(self._getInternalName("tag_genre_deepcopy"))
+            super().__init__(name, builder, editor_ctl)
 
             self.widget.set_wrap_width(5)
             self.widget.set_entry_text_column(0)

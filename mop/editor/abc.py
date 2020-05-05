@@ -14,16 +14,24 @@ class EditorWidget(GObject.GObject):
         "tag-value-incr": (GObject.SIGNAL_RUN_LAST, None, []),
     }
 
-    def __init__(self, name, widget, editor_ctl):
+    def __init__(self, name, builder, editor_ctl):
         super().__init__()
 
         self._name = name
+        self._builder = builder
         self._editor_ctl = editor_ctl
         self._on_change_active = True
 
-        self.widget = widget
+        self.widget = builder.get_object(self._getInternalName(name))
+        if self.widget is None:
+            raise ValueError(f"Glade object not found: {self._getInternalName(name)}")
+
         self._connect()
         self._default_tooltip = self.widget.get_tooltip_text()
+
+    @staticmethod
+    def _getInternalName(name):
+        return f"current_edit_{name}"
 
     def init(self, audio_file):
         raise NotImplementedError()

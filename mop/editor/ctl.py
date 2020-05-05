@@ -45,41 +45,27 @@ class EditorControl(GObject.GObject):
                 "tag_encodedBy_entry", "tag_publisher_entry", "tag_copyright_entry",
                 "tag_url_entry",
         ):
-            internal_name = f"current_edit_{widget_name}"
-            widget = builder.get_object(internal_name)
-            if widget is None:
-                raise ValueError(f"Glade object not found: {internal_name}")
-
             # Make editor widgets
             if widget_name == "tag_album_type_combo":
-                editor_widget = AlbumTypeEditorWidget(
-                    widget_name, widget,
-                    builder.get_object("current_edit_tag_album_type_deepcopy"),
-                    self
-                )
+                editor_widget = AlbumTypeEditorWidget( widget_name, builder, self)
 
             elif widget_name == "tag_genre_combo":
-                editor_widget = GenreEditorWidget(
-                    widget_name, widget,
-                    builder.get_object("current_edit_tag_genre_deepcopy"),
-                    self
-                )
+                editor_widget = GenreEditorWidget(widget_name, builder, self)
 
             elif widget_name == "tag_version_combo":
-                editor_widget = TagVersionChoiceWidget(widget_name, widget, self)
+                editor_widget = TagVersionChoiceWidget(widget_name, builder, self)
 
             elif widget_name in ("tag_track_num_entry", "tag_track_total_entry",
                                  "tag_disc_num_entry", "tag_disc_total_entry"):
-                editor_widget = NumTotalEditorWidget(widget_name, widget, self,
-                                                     is_total="total" in widget_name)
+                editor_widget = NumTotalEditorWidget(widget_name, builder, self)
             elif widget_name.endswith("_date_entry"):
-                editor_widget = DateEditorWidget(widget_name, widget, self)
+                editor_widget = DateEditorWidget(widget_name, builder, self)
             elif widget_name.endswith("tag_comment_entry"):
-                editor_widget = SimpleCommentEditorWidget(widget_name, widget, self)
+                editor_widget = SimpleCommentEditorWidget(widget_name, builder, self)
             elif widget_name.endswith("tag_url_entry"):
-                editor_widget = SimpleUrlEditorWidget(widget_name, widget, self)
+                editor_widget = SimpleUrlEditorWidget(widget_name, builder, self)
             else:
-                editor_widget = EntryEditorWidget(widget_name, widget, self)
+                editor_widget = EntryEditorWidget(widget_name, builder, self)
 
             if editor_widget is not None:
                 editor_widget.connect("tag-changed", self._onTagChanged)
