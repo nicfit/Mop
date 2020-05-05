@@ -9,7 +9,7 @@ from eyed3.utils import formatTime, formatSize
 from .config import getState, DEFAULT_STATE_FILE, getConfig
 from .utils import eyed3_load, eyed3_load_dir, escapeMarkup
 from .dialogs import Dialog, FileSaveDialog, AboutDialog, FileChooserDialog, NothingToDoDialog
-from .editorctl import EditorControl
+from .editor import EditorControl
 from .filesctl import FileListControl
 
 log = logging.getLogger(__name__)

@@ -1,17 +1,18 @@
 import logging
 from functools import partial
-from contextlib import contextmanager
-from eyed3 import id3, core
-from eyed3.id3 import ID3_V1_0, ID3_V1_1, ID3_V2_2, ID3_V2_3, ID3_V2_4, Genre
-from eyed3.id3.tag import ID3_V1_MAX_TEXTLEN, ID3_V1_COMMENT_DESC
-from gi.repository import GObject, Gtk, Gdk
+from eyed3 import core
+from eyed3.id3 import (
+    ID3_V1_0, ID3_V1_1, ID3_V2_2, ID3_V2_3, ID3_V2_4, versionToString, Genre
+)
 
-from .core import GENRES
+from eyed3.id3.tag import (
+    ID3_V1_MAX_TEXTLEN, ID3_V1_COMMENT_DESC, DEFAULT_LANG
+)
+from gi.repository import Gtk, Gdk
+from ..core import GENRES
+from .abc import EditorWidget
 
 log = logging.getLogger(__name__)
-ENTRY_ICON_PRIMARY = Gtk.EntryIconPosition.PRIMARY
-ENTRY_ICON_SECONDARY = Gtk.EntryIconPosition.SECONDARY
-MOUSE_BUTTON1_MASK = Gdk.ModifierType.BUTTON1_MASK
 
 # Genre models. A static ID3 v1 and dynamic v2, for quick swapping
 _id3_v1_genre_model = Gtk.ListStore(str, str)
@@ -23,102 +24,12 @@ for genre in sorted(GENRES.iter()):
     if genre.id is not None and genre.id <= GENRES.WINAMP_GENRE_MAX:
         _id3_v1_genre_model.append([genre.name, str(genre.id)])
 
-
-class EditorWidget(GObject.GObject):
-    __gsignals__ = {
-        "tag-changed": (GObject.SIGNAL_RUN_LAST, None, []),
-        # tag-value-copy(EditorWidget, new_value) -> None
-        "tag-value-copy": (GObject.SIGNAL_RUN_LAST, None, (str,)),
-        # tag-value-incr(EditorWidget) -> None
-        "tag-value-incr": (GObject.SIGNAL_RUN_LAST, None, []),
-    }
-
-    def __init__(self, name, widget, editor_ctl):
-        super().__init__()
-
-        self._name = name
-        self._editor_ctl = editor_ctl
-        self._on_change_active = True
-
-        self.widget = widget
-        self._connect()
-        self._default_tooltip = self.widget.get_tooltip_text()
-
-    def init(self, audio_file):
-        raise NotImplementedError()
-
-    def get(self):
-        raise NotImplementedError()
-
-    def set(self, audio_file, value) -> bool:
-        changed = False
-        for tag in (t for t in (audio_file.tag, audio_file.second_v1_tag) if t):
-            getter, setter = self._getAccessors(tag)
-            # Normalize "" to None
-            if (value or None) != (getter() or None):
-                log.debug(f"Set tag value: {value}")
-                setter(value)
-                changed = True
-        return changed
-
-    def _connect(self):
-        self.widget.connect("changed", self._onChanged)
-        self.widget.connect("icon-release", self._onDeepCopy)
-
-    def _extractPropertyName(self):
-        prop = ""
-        cap_next = False
-        for c in self._name[len("tag_"):-len("_entry")]:
-            if c == "_":
-                cap_next = True
-            else:
-                if cap_next:
-                    cap_next = False
-                    c = c.upper()
-                prop += c
-        prop = prop[0].upper() + prop[1:]
-        return prop
-
-    def _getAccessors(self, tag, prop=None):
-        prop = prop or self._extractPropertyName()
-
-        getter_name = f"_get{prop}"
-        setter_name = f"_set{prop}"
-        if hasattr(tag, getter_name) and hasattr(tag, setter_name):
-            return getattr(tag, getter_name), getattr(tag, setter_name)
-        else:
-            import pdb; pdb.set_trace()  # FIXME
-            ...
-            raise ValueError(f"Unsupported property name: {prop}")
-
-    def _onChanged(self, widget):
-        if self._on_change_active and self._editor_ctl.current_edit:
-            tag = self._editor_ctl.current_edit.selected_tag
-
-            if self.set(self._editor_ctl.current_edit, widget.get_text()):
-                log.debug("Setting tag_dirty4")
-                self._editor_ctl.current_edit.is_dirty = True
-                self.emit("tag-changed")
-
-    def _onDeepCopy(self, entry, icon_pos, button):
-        raise NotImplementedError()
-
-    @contextmanager
-    def _onChangeInactive(self):
-        """Context manager for deactivating on-change events."""
-        self._on_change_active = False
-        try:
-            yield None
-        finally:
-            self._on_change_active = True
-
-    def _setSensitive(self, state, tooltip_text):
-        self.widget.set_sensitive(state)
-        self.widget.set_tooltip_text(tooltip_text)
+ENTRY_ICON_PRIMARY = Gtk.EntryIconPosition.PRIMARY
+ENTRY_ICON_SECONDARY = Gtk.EntryIconPosition.SECONDARY
+MOUSE_BUTTON1_MASK = Gdk.ModifierType.BUTTON1_MASK
 
 
 class EntryEditorWidget(EditorWidget):
-
     def init(self, audio_file):
         tag = audio_file.selected_tag
 
@@ -146,7 +57,6 @@ class EntryEditorWidget(EditorWidget):
 
 
 class SimpleAccessorEditorWidgetABC(EntryEditorWidget):
-
     def init(self, audio_file):
         tag = audio_file.selected_tag
 
@@ -189,7 +99,7 @@ class SimpleCommentEditorWidget(SimpleAccessorEditorWidgetABC):
 
     def _getAccessors(self, tag, prop=None):
         desc = "" if tag.isV2() else ID3_V1_COMMENT_DESC
-        lang = id3.DEFAULT_LANG
+        lang = DEFAULT_LANG
 
         def setter(val):
             tag.comments.set(val, desc, lang=lang)
@@ -219,7 +129,6 @@ class SimpleUrlEditorWidget(SimpleAccessorEditorWidgetABC):
 
 
 class NumTotalEditorWidget(EntryEditorWidget):
-
     def __init__(self, name, num_widget, editor_ctl, is_total=False):
         self._is_total = is_total
         super().__init__(name, num_widget, editor_ctl)
@@ -457,7 +366,7 @@ class TagVersionChoiceWidget(EditorWidget):
         super().__init__(*args)
 
         self.id3_versions = {
-            ".".join([str(x) for x in v]): (v, f"ID3 {id3.versionToString(v)}")
+            ".".join([str(x) for x in v]): (v, f"ID3 {versionToString(v)}")
             for v in (ID3_V2_4, ID3_V2_3, ID3_V2_2, ID3_V1_1, ID3_V1_0)
         }
 
@@ -473,7 +382,7 @@ class TagVersionChoiceWidget(EditorWidget):
 
             for vid, (version, version_str) in self.id3_versions.items():
                 if selected.version == version or (other and other.version == version):
-                    self.widget.append(vid, f"ID3 {id3.versionToString(version)}")
+                    self.widget.append(vid, f"ID3 {versionToString(version)}")
                     if selected.version == version:
                         self.widget.set_active_id(vid)
 
@@ -507,161 +416,3 @@ class TagVersionChoiceWidget(EditorWidget):
         raise NotImplementedError()
 
 
-class EditorControl(GObject.GObject):
-    COMMON_PAGE = 0
-    EXTRAS_PAGE = 1
-    IMAGES_PAGE = 2
-
-    __gsignals__ = {
-        "tag-changed": (GObject.SIGNAL_RUN_LAST, None, []),
-    }
-
-    def __init__(self, file_list_ctl, builder):
-        super().__init__()
-
-        self._file_list_ctl = file_list_ctl
-        self._current_audio_file = None
-
-        self._notebook = builder.get_object("editor_notebook")
-        # XXX: Disable WIP notebook tabs
-        self._notebook.get_nth_page(self.IMAGES_PAGE).hide()
-
-        self._edit_prefer_v1_checkbutton = builder.get_object("default_prefer_v1_checkbutton")
-        self._edit_prefer_v1_checkbutton.connect("toggled", lambda _: self.edit(self.current_edit))
-
-        self._editor_widgets = {}
-        for widget_name in (
-                "tag_title_entry", "tag_artist_entry", "tag_album_entry", "tag_comment_entry",
-                "tag_track_num_entry", "tag_track_total_entry",
-                "tag_disc_num_entry", "tag_disc_total_entry",
-                "tag_release_date_entry", "tag_recording_date_entry",
-                "tag_original_release_date_entry",
-                "tag_album_type_combo", "tag_version_combo", "tag_genre_combo",
-                # Extras
-                "tag_albumArtist_entry", "tag_origArtist_entry", "tag_composer_entry",
-                "tag_encodedBy_entry", "tag_publisher_entry", "tag_copyright_entry",
-                "tag_url_entry",
-        ):
-            internal_name = f"current_edit_{widget_name}"
-            widget = builder.get_object(internal_name)
-            if widget is None:
-                raise ValueError(f"Glade object not found: {internal_name}")
-
-            # Make editor widgets
-            if widget_name == "tag_album_type_combo":
-                editor_widget = AlbumTypeEditorWidget(
-                    widget_name, widget,
-                    builder.get_object("current_edit_tag_album_type_deepcopy"),
-                    self
-                )
-
-            elif widget_name == "tag_genre_combo":
-                editor_widget = GenreEditorWidget(
-                    widget_name, widget,
-                    builder.get_object("current_edit_tag_genre_deepcopy"),
-                    self
-                )
-
-            elif widget_name == "tag_version_combo":
-                editor_widget = TagVersionChoiceWidget(widget_name, widget, self)
-
-            elif widget_name in ("tag_track_num_entry", "tag_track_total_entry",
-                                 "tag_disc_num_entry", "tag_disc_total_entry"):
-                editor_widget = NumTotalEditorWidget(widget_name, widget, self,
-                                                     is_total="total" in widget_name)
-            elif widget_name.endswith("_date_entry"):
-                editor_widget = DateEditorWidget(widget_name, widget, self)
-            elif widget_name.endswith("tag_comment_entry"):
-                editor_widget = SimpleCommentEditorWidget(widget_name, widget, self)
-            elif widget_name.endswith("tag_url_entry"):
-                editor_widget = SimpleUrlEditorWidget(widget_name, widget, self)
-            else:
-                editor_widget = EntryEditorWidget(widget_name, widget, self)
-
-            if editor_widget is not None:
-                editor_widget.connect("tag-changed", self._onTagChanged)
-                editor_widget.connect("tag-value-copy", self._onTagValueCopy)
-                editor_widget.connect("tag-value-incr", self._onTagValueIncrement)
-                self._editor_widgets[widget_name] = editor_widget
-
-    def _onTagChanged(self, *args):
-        log.debug(f"_onTagChanged: {args}")
-        self._file_list_ctl.list_store.updateRow(self._file_list_ctl.current_audio_file)
-        self.emit("tag-changed")
-
-    def _onTagValueCopy(self, editor_widget, copy_value):
-        for audio_file in self._file_list_ctl.list_store.iterAudioFiles():
-            if editor_widget.set(audio_file, copy_value):
-                log.debug("Setting tag_dirty1")
-                audio_file.is_dirty = True
-                self._file_list_ctl.list_store.updateRow(audio_file)
-
-        # Update current edit
-        self.edit(self.current_edit)
-
-    def _onTagValueIncrement(self, editor_widget):
-        track_num_entry = self._editor_widgets["tag_track_num_entry"]
-        track_total_entry = self._editor_widgets["tag_track_total_entry"]
-
-        if editor_widget == track_num_entry:
-            # Track number -> 1, 2, 3, ...
-            i = 1
-            for audio_file in self._file_list_ctl.list_store.iterAudioFiles():
-                if editor_widget.set(audio_file, str(i)):
-                    log.debug("Setting tag_dirty2")
-                    audio_file.is_dirty = True
-                    self._file_list_ctl.list_store.updateRow(audio_file)
-                i += 1
-        elif editor_widget == track_total_entry:
-            # Track total -> len(audio_files) ...
-            all_files = list(self._file_list_ctl.list_store.iterAudioFiles())
-            file_count = len(all_files)
-            for audio_file in self._file_list_ctl.list_store.iterAudioFiles():
-                # No second_v1_tag supported needed for totals
-                if editor_widget.set(audio_file, str(file_count)):
-                    log.debug("Setting tag_dirty3")
-                    audio_file.is_dirty = True
-                    self._file_list_ctl.list_store.updateRow(audio_file)
-
-        # Update current edit
-        self.edit(self.current_edit)
-
-    def edit(self, audio_file, tag=None):
-        self._current_audio_file = audio_file
-        tag1 = audio_file.tag if audio_file else None
-        tag2 = audio_file.second_v1_tag if audio_file else None
-
-        if not tag:
-            # If two tags and a selection has not yet been made.
-            if tag2 and self._edit_prefer_v1_checkbutton.get_active():
-                audio_file.selected_tag = tag2
-            else:
-                audio_file.selected_tag = tag1
-        else:
-            audio_file.selected_tag = tag
-
-        self._edit_prefer_v1_checkbutton.set_visible(bool(tag2))
-
-        assert audio_file.selected_tag in (tag1, tag2)
-
-        if audio_file.selected_tag and audio_file.selected_tag.isV1():
-            # ID3 v1 supports no Extras
-            self._notebook.get_nth_page(self.EXTRAS_PAGE).hide()
-        else:
-            self._notebook.get_nth_page(self.EXTRAS_PAGE).show()
-
-        for widget_name, widget in self._editor_widgets.items():
-            try:
-                widget.init(audio_file)
-            except Exception as ex:
-                log.exception(ex)
-
-        self.file_list_ctl.list_store.updateRow(audio_file)
-
-    @property
-    def current_edit(self):
-        return self._current_audio_file
-
-    @property
-    def file_list_ctl(self):
-        return self._file_list_ctl
