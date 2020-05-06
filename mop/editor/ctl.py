@@ -1,5 +1,6 @@
 import logging
 from gi.repository import GObject
+from eyed3.id3 import ID3_ANY_VERSION, ID3_V1, ID3_V1_1, ID3_V2, ID3_V2_4
 from .common import (
     EntryEditorWidget,
     NumTotalEditorWidget, DateEditorWidget,
@@ -20,28 +21,28 @@ class EditorControl(GObject.GObject):
     }
 
     EDITOR_WIDGETS = {
-        "tag_title_entry": (EntryEditorWidget, None),
-        "tag_artist_entry": (EntryEditorWidget, None),
-        "tag_album_entry": (EntryEditorWidget, None),
-        "tag_track_num_entry": (NumTotalEditorWidget, None),
-        "tag_track_total_entry": (NumTotalEditorWidget, None),
-        "tag_disc_num_entry": (NumTotalEditorWidget, None),
-        "tag_disc_total_entry": (NumTotalEditorWidget, None),
-        "tag_release_date_entry": (DateEditorWidget, None),
-        "tag_recording_date_entry": (DateEditorWidget, None),
-        "tag_original_release_date_entry": (DateEditorWidget, None),
-        "tag_album_type_combo": (AlbumTypeEditorWidget, None),
-        "tag_genre_combo": (GenreEditorWidget, None),
-        "tag_version_combo": (TagVersionChoiceWidget, None),
-        "tag_comment_entry": (SimpleCommentEditorWidget, None),
-        "tag_url_entry": (SimpleUrlEditorWidget, None),
+        "tag_title_entry": (EntryEditorWidget, ID3_ANY_VERSION),
+        "tag_artist_entry": (EntryEditorWidget, ID3_ANY_VERSION),
+        "tag_album_entry": (EntryEditorWidget, ID3_ANY_VERSION),
+        "tag_track_num_entry": (NumTotalEditorWidget, ID3_V1_1),
+        "tag_track_total_entry": (NumTotalEditorWidget, ID3_V2),
+        "tag_disc_num_entry": (NumTotalEditorWidget, ID3_V2),
+        "tag_disc_total_entry": (NumTotalEditorWidget, ID3_V2),
+        "tag_release_date_entry": (DateEditorWidget, ID3_V2_4),
+        "tag_recording_date_entry": (DateEditorWidget, ID3_V2),
+        "tag_original_release_date_entry": (DateEditorWidget, ID3_V1),
+        "tag_album_type_combo": (AlbumTypeEditorWidget, ID3_V2),
+        "tag_genre_combo": (GenreEditorWidget, ID3_ANY_VERSION),
+        "tag_version_combo": (TagVersionChoiceWidget, ID3_ANY_VERSION),
+        "tag_comment_entry": (SimpleCommentEditorWidget, ID3_ANY_VERSION),
+        "tag_url_entry": (SimpleUrlEditorWidget, ID3_V2),
         # Extras
-        "tag_albumArtist_entry": (EntryEditorWidget, None),
-        "tag_origArtist_entry": (EntryEditorWidget, None),
-        "tag_composer_entry": (EntryEditorWidget, None),
-        "tag_encodedBy_entry": (EntryEditorWidget, None),
-        "tag_publisher_entry": (EntryEditorWidget, None),
-        "tag_copyright_entry": (EntryEditorWidget, None),
+        "tag_albumArtist_entry": (EntryEditorWidget, ID3_V2),
+        "tag_origArtist_entry": (EntryEditorWidget, ID3_V2),
+        "tag_composer_entry": (EntryEditorWidget, ID3_V2),
+        "tag_encodedBy_entry": (EntryEditorWidget, ID3_V2),
+        "tag_publisher_entry": (EntryEditorWidget, ID3_V2),
+        "tag_copyright_entry": (EntryEditorWidget, ID3_V2),
     }
 
     def __init__(self, file_list_ctl, builder):
@@ -58,8 +59,8 @@ class EditorControl(GObject.GObject):
         self._edit_prefer_v1_checkbutton.connect("toggled", lambda _: self.edit(self.current_edit))
 
         self._editor_widgets = {}
-        for widget_name, (WidgetClass, XXX) in self.EDITOR_WIDGETS.items():
-            editor_widget = WidgetClass(widget_name, builder, self)
+        for widget_name, (WidgetClass, min_id3_version) in self.EDITOR_WIDGETS.items():
+            editor_widget = WidgetClass(widget_name, builder, self, min_id3_version)
             editor_widget.connect("tag-changed", self._onTagChanged)
             editor_widget.connect("tag-value-copy", self._onTagValueCopy)
             editor_widget.connect("tag-value-incr", self._onTagValueIncrement)

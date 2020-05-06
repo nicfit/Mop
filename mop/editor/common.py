@@ -33,19 +33,23 @@ class EntryEditorWidget(EditorWidget):
     def init(self, audio_file):
         tag = audio_file.selected_tag
 
-        with self._onChangeInactive():
-            if tag.isV1():
-                # ID3 v1 length limits
-                self.widget.set_max_length(ID3_V1_MAX_TEXTLEN)
-            else:
-                self.widget.set_max_length(0)
+        if not self._checkVersion(tag.version):
+            with self._onChangeInactive():
+                self.widget.set_text("")
+            self._setSensitive(False)
+        else:
+            self._setSensitive(True)
 
-            if tag:
+            with self._onChangeInactive():
+                if tag.isV1():
+                    # ID3 v1 length limits
+                    self.widget.set_max_length(ID3_V1_MAX_TEXTLEN)
+                else:
+                    self.widget.set_max_length(0)
+
                 getter, _ = self._getAccessors(tag)
                 curr_val = getter()
                 self.widget.set_text(str(curr_val or ""))
-            else:
-                self.widget.set_text("")
 
     def get(self):
         return self.widget.get_text()
@@ -59,31 +63,22 @@ class EntryEditorWidget(EditorWidget):
 class SimpleAccessorEditorWidgetABC(EntryEditorWidget):
     def init(self, audio_file):
         tag = audio_file.selected_tag
+        assert self._checkVersion(tag.version)
 
-        if tag.isV1():
-            # ID3 v1 length limits
-            limit = ID3_V1_MAX_TEXTLEN
-            if tag.isV1():
-                # v1.1 stores uses last two bytes of comment to store track
-                limit -= 2
-            self.widget.set_max_length(limit)
-        else:
-            self.widget.set_max_length(0)
-
+        self._setSensitive(True)
+        self.widget.set_max_length(0)
         with self._onChangeInactive():
-            if tag:
-                getter, _ = self._getAccessors(tag)
-                text_frame = getter()
-                self.widget.set_text(text_frame.text if text_frame else "")
-            else:
-                self.widget.set_text("")
+            getter, _ = self._getAccessors(tag)
+            comment = getter()
+            self.widget.set_text(comment if comment else "")
 
 
 class SimpleCommentEditorWidget(SimpleAccessorEditorWidgetABC):
     def init(self, audio_file):
         tag = audio_file.selected_tag
+        assert self._checkVersion(tag.version)
 
-        retval = super().init(audio_file)
+        super().init(audio_file)
 
         if tag.isV1():
             # ID3 v1 length limits
@@ -92,10 +87,6 @@ class SimpleCommentEditorWidget(SimpleAccessorEditorWidgetABC):
                 # v1.1 stores uses last two bytes of comment to store track
                 limit -= 2
             self.widget.set_max_length(limit)
-        else:
-            self.widget.set_max_length(0)
-
-        return retval
 
     def _getAccessors(self, tag, prop=None):
         desc = "" if tag.isV2() else ID3_V1_COMMENT_DESC
@@ -104,7 +95,11 @@ class SimpleCommentEditorWidget(SimpleAccessorEditorWidgetABC):
         def setter(val):
             tag.comments.set(val, desc, lang=lang)
 
-        return partial(tag.comments.get, desc, lang=lang), setter
+        def getter():
+            comment = tag.comments.get(desc, lang=lang)
+            return comment.text if comment else None
+
+        return getter, setter
 
 
 class SimpleUrlEditorWidget(SimpleAccessorEditorWidgetABC):
@@ -114,24 +109,29 @@ class SimpleUrlEditorWidget(SimpleAccessorEditorWidgetABC):
         def setter(val):
             tag.user_url_frames.set(val, desc)
 
-        return partial(tag.user_url_frames.get, desc), setter
+        def getter():
+            url = tag.user_url_frames.get(desc)
+            return url.url if url else None
+
+        return getter, setter
 
     def init(self, audio_file):
         tag = audio_file.selected_tag
-
-        with self._onChangeInactive():
-            if tag:
+        if not self._checkVersion(tag.version):
+            self.widget.set_text("")
+            self._setSensitive(False)
+        else:
+            self._setSensitive(True)
+            with self._onChangeInactive():
                 getter, _ = self._getAccessors(tag)
-                url_frame = getter()
-                self.widget.set_text(url_frame.url if url_frame else "")
-            else:
-                self.widget.set_text("")
+                url = getter()
+                self.widget.set_text(url if url else "")
 
 
 class NumTotalEditorWidget(EntryEditorWidget):
-    def __init__(self, name, builder, editor_ctl):
+    def __init__(self, name, builder, editor_ctl, min_id3_version):
         self._is_total = "total" in name
-        super().__init__(name, builder, editor_ctl)
+        super().__init__(name, builder, editor_ctl, min_id3_version)
 
     def _connect(self):
         self.widget.connect("changed", self._onChanged)
@@ -144,9 +144,11 @@ class NumTotalEditorWidget(EntryEditorWidget):
         return super()._getAccessors(tag, prop=prop)
 
     def set(self, audio_file, value) -> bool:
+        print("set 2:")
         changed = False
 
-        for tag in (t for t in (audio_file.tag, audio_file.second_v1_tag) if t):
+        for tag in (t for t in (audio_file.tag, audio_file.second_v1_tag)
+                        if t and self._checkVersion(t.version)):
             getter, setter = self._getAccessors(tag)
             curr = getter()
             value = int(value) if value else None
@@ -167,29 +169,16 @@ class NumTotalEditorWidget(EntryEditorWidget):
     def init(self, audio_file):
         tag = audio_file.selected_tag
 
-        major, minor = tag.version[:2]
-        if self._name.startswith("tag_track_") and major == 1:
-            if self._name.startswith("tag_track_num"):
-                self._setSensitive(
-                    minor != 0,
-                    self._default_tooltip if minor != 0 else "Track number requires ID3 v1.1"
-                )
-            else:
-                self._setSensitive(False, "Track total requires ID3 v2.x")
-        elif self._name.startswith("tag_disc_") and tag.isV1():
-            # No disc number support for ID3 v1
-            self._setSensitive(False, "Disc number requires ID3 v2.x")
+        if not self._checkVersion(tag.version):
+            self._setSensitive(False)
+            with self._onChangeInactive():
+                self.widget.set_text("")
         else:
             self._setSensitive(True, self._default_tooltip)
-
-        with self._onChangeInactive():
-            if not tag:
-                self.widget.set_text("")
-                return
-
-            getter, _ = self._getAccessors(tag)
-            curr_val = getter()[0 if not self._is_total else 1]
-            self.widget.set_text(str(curr_val) if curr_val is not None else "")
+            with self._onChangeInactive():
+                getter, _ = self._getAccessors(tag)
+                curr_val = getter()[0 if not self._is_total else 1]
+                self.widget.set_text(str(curr_val) if curr_val is not None else "")
 
 
 class DateEditorWidget(EntryEditorWidget):
@@ -197,28 +186,12 @@ class DateEditorWidget(EntryEditorWidget):
         super().__init__(*args, **kwargs)
         self._default_fg = self.widget.get_style().fg
 
-    def init(self, audio_file):
-        tag = audio_file.selected_tag
-
-        retval = super().init(audio_file)
-
-        if tag.version < ID3_V2_4 and self._name == "tag_original_release_date_entry":
-            # Original release date is only supported in ID3 2.4
-            self._setSensitive(False, "Original release date requires ID3 v2.4")
-        elif tag.isV1() and self._name == "tag_recording_date_entry":
-            # Recording date is only supported in ID3 2
-            self._setSensitive(False, "Recording date requires ID3 v2.x")
-        else:
-            # ID3 v1 is only a year
-            self.widget.set_max_length(4 if tag.isV1() else 0)
-            self._setSensitive(True, self._default_tooltip)
-
-        return retval
-
     def set(self, audio_file, value) -> bool:
+        print("set 3:")
         changed = False
 
-        for tag in (t for t in (audio_file.tag, audio_file.second_v1_tag) if t):
+        for tag in (t for t in (audio_file.tag, audio_file.second_v1_tag)
+                        if t and self._checkVersion(t.version)):
             getter, setter = self._getAccessors(tag)
             try:
                 date = core.Date.parse(value) if value else None
@@ -248,11 +221,11 @@ class ComboBoxEditorWidget(EditorWidget):
 
 
 class AlbumTypeEditorWidget(ComboBoxEditorWidget):
-    def __init__(self, name, builder, editor_ctl):
+    def __init__(self, name, builder, editor_ctl, min_id3_version):
         self._deep_copy_widget = builder.get_object(
             self._getInternalName("tag_album_type_deepcopy")
         )
-        super().__init__(name, builder, editor_ctl)
+        super().__init__(name, builder, editor_ctl, min_id3_version)
 
         with self._onChangeInactive():
             self.widget.remove_all()
@@ -261,22 +234,24 @@ class AlbumTypeEditorWidget(ComboBoxEditorWidget):
 
     def init(self, audio_file):
         tag = audio_file.selected_tag
+        if not self._checkVersion(tag.version):
+            with self._onChangeInactive():
+                self.widget.set_active(-1)
+            self._setSensitive(False)
+            return
 
+        self._setSensitive(True, self._default_tooltip)
         with self._onChangeInactive():
             for i, titer in enumerate(self.widget.get_model()):
                 if (titer[0].lower() or None) == (tag.album_type or None):
                     self.widget.set_active(i)
                     break
 
-        # User text frames are ID3 v2 only
-        if tag.isV1():
-            self._setSensitive(False, "Album type requires ID3 v2.x")
-        else:
-            self._setSensitive(True, self._default_tooltip)
-
     def set(self, audio_file, value) -> bool:
+        print("set 4:")
         changed = False
-        for tag in (t for t in (audio_file.tag, audio_file.second_v1_tag) if t):
+        for tag in (t for t in (audio_file.tag, audio_file.second_v1_tag)
+                        if t and self._checkVersion(t.version)):
             value = value.lower()
             if (tag.album_type or None) != (value or None):
                 tag.album_type = value
@@ -293,16 +268,17 @@ class AlbumTypeEditorWidget(ComboBoxEditorWidget):
 
 
 class GenreEditorWidget(ComboBoxEditorWidget):
-    def __init__(self, name, builder, editor_ctl):
+    def __init__(self, name, builder, editor_ctl, min_id3_version):
         with self._onChangeInactive():
             self._deep_copy_widget = builder.get_object(self._getInternalName("tag_genre_deepcopy"))
-            super().__init__(name, builder, editor_ctl)
+            super().__init__(name, builder, editor_ctl, min_id3_version)
 
             self.widget.set_wrap_width(5)
             self.widget.set_entry_text_column(0)
 
     def init(self, audio_file):
         tag = audio_file.selected_tag
+        assert self._checkVersion(tag.version)
 
         # ID3 v1 cannot edit/edit genres, v2 can
         entry = self.widget.get_child()
@@ -337,8 +313,10 @@ class GenreEditorWidget(ComboBoxEditorWidget):
                     self.widget.set_active_id("-1")
 
     def set(self, audio_file, genre: Genre) -> bool:
+        print("set 5:")
         changed = False
-        for tag in (t for t in (audio_file.tag, audio_file.second_v1_tag) if t):
+        for tag in (t for t in (audio_file.tag, audio_file.second_v1_tag)
+                        if t and self._checkVersion(t.version)):
             if (tag.genre or None) != (genre or None):
                 tag.genre = genre
                 changed = True

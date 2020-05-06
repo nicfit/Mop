@@ -1,6 +1,7 @@
 import logging
 from contextlib import contextmanager
 from gi.repository import GObject
+from eyed3.id3 import ID3_ANY_VERSION, versionToString
 
 log = logging.getLogger(__name__)
 
@@ -14,13 +15,14 @@ class EditorWidget(GObject.GObject):
         "tag-value-incr": (GObject.SIGNAL_RUN_LAST, None, []),
     }
 
-    def __init__(self, name, builder, editor_ctl):
+    def __init__(self, name, builder, editor_ctl, min_id3_version):
         super().__init__()
 
         self._name = name
         self._builder = builder
         self._editor_ctl = editor_ctl
         self._on_change_active = True
+        self._min_id3_version = min_id3_version or ID3_ANY_VERSION
 
         self.widget = builder.get_object(self._getInternalName(name))
         if self.widget is None:
@@ -30,7 +32,7 @@ class EditorWidget(GObject.GObject):
         self._default_tooltip = self.widget.get_tooltip_text()
 
     @staticmethod
-    def _getInternalName(name):
+    def _getInternalName(name) -> str:
         return f"current_edit_{name}"
 
     def init(self, audio_file):
@@ -40,12 +42,14 @@ class EditorWidget(GObject.GObject):
         raise NotImplementedError()
 
     def set(self, audio_file, value) -> bool:
+        print("set 1:")
         changed = False
-        for tag in (t for t in (audio_file.tag, audio_file.second_v1_tag) if t):
+        for tag in (t for t in (audio_file.tag, audio_file.second_v1_tag)
+                        if t and self._checkVersion(t.version)):
             getter, setter = self._getAccessors(tag)
             # Normalize "" to None
             if (value or None) != (getter() or None):
-                log.debug(f"Set tag value: {value}")
+                log.info(f"Set tag value: {value}")
                 setter(value)
                 changed = True
         return changed
@@ -76,8 +80,6 @@ class EditorWidget(GObject.GObject):
         if hasattr(tag, getter_name) and hasattr(tag, setter_name):
             return getattr(tag, getter_name), getattr(tag, setter_name)
         else:
-            import pdb; pdb.set_trace()  # FIXME
-            ...
             raise ValueError(f"Unsupported property name: {prop}")
 
     def _onChanged(self, widget):
@@ -101,6 +103,17 @@ class EditorWidget(GObject.GObject):
         finally:
             self._on_change_active = True
 
-    def _setSensitive(self, state, tooltip_text):
+    def _setSensitive(self, state, tooltip_text=None):
         self.widget.set_sensitive(state)
+
+        if not tooltip_text and bool(state) is False:
+            tooltip_text = f"Requires ID3 {versionToString(self._min_id3_version)}"
         self.widget.set_tooltip_text(tooltip_text)
+
+    def _checkVersion(self, v) -> bool:
+        # Normalize None to 0 in version tuples when comparing
+        retval = (self._min_id3_version == ID3_ANY_VERSION) \
+                 or (v[:2] >= tuple([(n if n else 0) for n in self._min_id3_version[:2]]))
+        log.info(f"_checkVersion::{self._name} {v=} {self._min_id3_version=} {retval=}")
+
+        return retval
