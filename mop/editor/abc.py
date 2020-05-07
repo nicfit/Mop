@@ -35,21 +35,32 @@ class EditorWidget(GObject.GObject):
     def _getInternalName(name) -> str:
         return f"current_edit_{name}"
 
-    def init(self, audio_file):
+    def init(self, audio_file, disable_change_signal=False):
+        if not disable_change_signal:
+            self._init(audio_file)
+        else:
+            with self._onChangeInactive():
+                self._init(audio_file)
+
+    def _init(self, audio_file) -> None:
         raise NotImplementedError()
 
     def get(self):
         raise NotImplementedError()
 
+    def _iterTags(self, audio_file):
+        for tag in (audio_file.tag, audio_file.second_v1_tag):
+            if tag and self._checkVersion(tag.version):
+                yield tag
+
     def set(self, audio_file, value) -> bool:
-        print("set 1:")
         changed = False
-        for tag in (t for t in (audio_file.tag, audio_file.second_v1_tag)
-                        if t and self._checkVersion(t.version)):
+
+        for tag in self._iterTags(audio_file):
             getter, setter = self._getAccessors(tag)
             # Normalize "" to None
             if (value or None) != (getter() or None):
-                log.info(f"Set tag value: {value}")
+                log.info(f"Set [{self._name}] value, tag v{tag.version}: '{getter()}' -> '{value}'")
                 setter(value)
                 changed = True
         return changed
@@ -84,7 +95,6 @@ class EditorWidget(GObject.GObject):
 
     def _onChanged(self, widget):
         if self._on_change_active and self._editor_ctl.current_edit:
-            tag = self._editor_ctl.current_edit.selected_tag
 
             if self.set(self._editor_ctl.current_edit, widget.get_text()):
                 log.debug("Setting tag_dirty4")
@@ -114,6 +124,6 @@ class EditorWidget(GObject.GObject):
         # Normalize None to 0 in version tuples when comparing
         retval = (self._min_id3_version == ID3_ANY_VERSION) \
                  or (v[:2] >= tuple([(n if n else 0) for n in self._min_id3_version[:2]]))
-        log.info(f"_checkVersion::{self._name} {v=} {self._min_id3_version=} {retval=}")
+        log.debug(f"_checkVersion::{self._name} {v=} {self._min_id3_version=} {retval=}")
 
         return retval

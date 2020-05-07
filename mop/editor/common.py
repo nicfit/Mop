@@ -30,7 +30,7 @@ MOUSE_BUTTON1_MASK = Gdk.ModifierType.BUTTON1_MASK
 
 
 class EntryEditorWidget(EditorWidget):
-    def init(self, audio_file):
+    def _init(self, audio_file):
         tag = audio_file.selected_tag
 
         if not self._checkVersion(tag.version):
@@ -61,7 +61,7 @@ class EntryEditorWidget(EditorWidget):
 
 
 class SimpleAccessorEditorWidgetABC(EntryEditorWidget):
-    def init(self, audio_file):
+    def _init(self, audio_file):
         tag = audio_file.selected_tag
         assert self._checkVersion(tag.version)
 
@@ -74,11 +74,11 @@ class SimpleAccessorEditorWidgetABC(EntryEditorWidget):
 
 
 class SimpleCommentEditorWidget(SimpleAccessorEditorWidgetABC):
-    def init(self, audio_file):
+    def _init(self, audio_file):
         tag = audio_file.selected_tag
         assert self._checkVersion(tag.version)
 
-        super().init(audio_file)
+        super()._init(audio_file)
 
         if tag.isV1():
             # ID3 v1 length limits
@@ -115,7 +115,7 @@ class SimpleUrlEditorWidget(SimpleAccessorEditorWidgetABC):
 
         return getter, setter
 
-    def init(self, audio_file):
+    def _init(self, audio_file):
         tag = audio_file.selected_tag
         if not self._checkVersion(tag.version):
             self.widget.set_text("")
@@ -144,11 +144,9 @@ class NumTotalEditorWidget(EntryEditorWidget):
         return super()._getAccessors(tag, prop=prop)
 
     def set(self, audio_file, value) -> bool:
-        print("set 2:")
         changed = False
 
-        for tag in (t for t in (audio_file.tag, audio_file.second_v1_tag)
-                        if t and self._checkVersion(t.version)):
+        for tag in self._iterTags(audio_file):
             getter, setter = self._getAccessors(tag)
             curr = getter()
             value = int(value) if value else None
@@ -166,7 +164,7 @@ class NumTotalEditorWidget(EntryEditorWidget):
             elif icon_pos == ENTRY_ICON_SECONDARY:
                 super()._onDeepCopy(entry, icon_pos, button)
 
-    def init(self, audio_file):
+    def _init(self, audio_file):
         tag = audio_file.selected_tag
 
         if not self._checkVersion(tag.version):
@@ -187,11 +185,9 @@ class DateEditorWidget(EntryEditorWidget):
         self._default_fg = self.widget.get_style().fg
 
     def set(self, audio_file, value) -> bool:
-        print("set 3:")
         changed = False
 
-        for tag in (t for t in (audio_file.tag, audio_file.second_v1_tag)
-                        if t and self._checkVersion(t.version)):
+        for tag in self._iterTags(audio_file):
             getter, setter = self._getAccessors(tag)
             try:
                 date = core.Date.parse(value) if value else None
@@ -232,7 +228,7 @@ class AlbumTypeEditorWidget(ComboBoxEditorWidget):
             for t in [""] + core.ALBUM_TYPE_IDS:
                 self.widget.append(t, t.upper())
 
-    def init(self, audio_file):
+    def _init(self, audio_file):
         tag = audio_file.selected_tag
         if not self._checkVersion(tag.version):
             with self._onChangeInactive():
@@ -248,10 +244,9 @@ class AlbumTypeEditorWidget(ComboBoxEditorWidget):
                     break
 
     def set(self, audio_file, value) -> bool:
-        print("set 4:")
         changed = False
-        for tag in (t for t in (audio_file.tag, audio_file.second_v1_tag)
-                        if t and self._checkVersion(t.version)):
+
+        for tag in self._iterTags(audio_file):
             value = value.lower()
             if (tag.album_type or None) != (value or None):
                 tag.album_type = value
@@ -276,7 +271,7 @@ class GenreEditorWidget(ComboBoxEditorWidget):
             self.widget.set_wrap_width(5)
             self.widget.set_entry_text_column(0)
 
-    def init(self, audio_file):
+    def _init(self, audio_file):
         tag = audio_file.selected_tag
         assert self._checkVersion(tag.version)
 
@@ -313,10 +308,8 @@ class GenreEditorWidget(ComboBoxEditorWidget):
                     self.widget.set_active_id("-1")
 
     def set(self, audio_file, genre: Genre) -> bool:
-        print("set 5:")
         changed = False
-        for tag in (t for t in (audio_file.tag, audio_file.second_v1_tag)
-                        if t and self._checkVersion(t.version)):
+        for tag in self._iterTags(audio_file):
             if (tag.genre or None) != (genre or None):
                 tag.genre = genre
                 changed = True
@@ -350,7 +343,7 @@ class TagVersionChoiceWidget(EditorWidget):
             for v in (ID3_V2_4, ID3_V2_3, ID3_V2_2, ID3_V1_1, ID3_V1_0)
         }
 
-    def init(self, audio_file):
+    def _init(self, audio_file):
         all_tags = {audio_file.tag, audio_file.second_v1_tag}
         all_tags.remove(audio_file.selected_tag)
         assert len(all_tags) == 1
@@ -390,7 +383,8 @@ class TagVersionChoiceWidget(EditorWidget):
         if curr_edit:
             curr_tag = curr_edit.tag if not version_id.startswith("1.") else curr_edit.second_v1_tag
             # Forcing edit of curr_tag with tag= argument. Otherwise the prefer checkbutton decides.
-            self._editor_ctl.edit(self._editor_ctl.current_edit, tag=curr_tag)
+            self._editor_ctl.edit(self._editor_ctl.current_edit, tag=curr_tag,
+                                  disable_change_signal=True)
 
     def _onDeepCopy(self, entry, icon_pos, button):
         raise NotImplementedError()

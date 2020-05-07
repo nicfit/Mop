@@ -56,7 +56,9 @@ class EditorControl(GObject.GObject):
         self._notebook.get_nth_page(self.IMAGES_PAGE).hide()
 
         self._edit_prefer_v1_checkbutton = builder.get_object("default_prefer_v1_checkbutton")
-        self._edit_prefer_v1_checkbutton.connect("toggled", lambda _: self.edit(self.current_edit))
+        self._edit_prefer_v1_checkbutton.connect(
+            "toggled", lambda _: self.edit(self.current_edit, disable_change_signal=True)
+        )
 
         self._editor_widgets = {}
         for widget_name, (WidgetClass, min_id3_version) in self.EDITOR_WIDGETS.items():
@@ -109,7 +111,7 @@ class EditorControl(GObject.GObject):
         # Update current edit
         self.edit(self.current_edit)
 
-    def edit(self, audio_file, tag=None):
+    def edit(self, audio_file, tag=None, disable_change_signal=False):
         self._current_audio_file = audio_file
         tag1 = audio_file.tag if audio_file else None
         tag2 = audio_file.second_v1_tag if audio_file else None
@@ -135,7 +137,7 @@ class EditorControl(GObject.GObject):
 
         for widget_name, widget in self._editor_widgets.items():
             try:
-                widget.init(audio_file)
+                widget.init(audio_file, disable_change_signal=disable_change_signal)
             except Exception as ex:
                 log.exception(ex)
 
