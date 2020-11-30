@@ -4,14 +4,13 @@
 #
 #    pip-compile --output-file=requirements/install.txt requirements/install.txt
 #
-attrs==19.3.0             # via nicfit.py
+attrs==20.3.0             # via nicfit.py
 deprecation==2.1.0        # via eyed3, nicfit.py
 eyed3==0.9.5              # via -r requirements/install.txt
-filetype==1.0.6           # via eyed3
-nicfit.py==0.8.6          # via -r requirements/install.txt
-packaging==20.3           # via deprecation
-pycairo==1.19.1           # via pygobject
-pygobject==3.36.0         # via -r requirements/install.txt
+filetype==1.0.7           # via eyed3
+nicfit.py==0.8.7          # via -r requirements/install.txt
+packaging==20.7           # via deprecation
+pycairo==1.20.0           # via pygobject
+pygobject==3.38.0         # via -r requirements/install.txt
 pyparsing==2.4.7          # via packaging
 pyyaml==5.3.1             # via nicfit.py
-six==1.14.0               # via packaging

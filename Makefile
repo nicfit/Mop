@@ -6,6 +6,8 @@ RELEASE_TAG = v$(VERSION)
 RELEASE_NAME = $(shell python setup.py --release-name 2> /dev/null)
 CHANGELOG = HISTORY.rst
 
+desktopdir = ${HOME}/.local/share/applications
+
 .PHONY: build dist requirements
 
 
@@ -15,12 +17,19 @@ all: build
 build:
 	./setup.py build
 
+Mop.desktop: Mop.desktop.in
+	sed -e "s|@install_source@|`pwd`|g"\
+        -e "s|@mop_exec@|`command -v mop`|g"\
+        $< > $@
+	desktop-file-validate $@
+
 
 ### Clean
 clean: clean-dist clean-test
 	rm -rf ./build
 	find -type d -name __pycache__ | xargs -r rm -rf
 	rm -rf Mop.egg-info
+	-rm Mop.desktop
 
 clean-dist:
 	rm -rf ./dist
@@ -52,8 +61,13 @@ test-dist: dist
 
 
 ### Install
-install: build
+install: build install-desktop
 	./setup.py install
+
+install-desktop: Mop.desktop
+	@test -d ${desktopdir} || mkdir -p ${desktopdir}
+	desktop-file-install --dir=${desktopdir} Mop.desktop
+	update-desktop-database ${desktopdir}
 
 
 ### Distribute

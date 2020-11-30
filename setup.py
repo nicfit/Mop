@@ -8,4 +8,9 @@ setup(package_dir={"": "."},
                   "console_scripts": [
                       "mop = mop.__main__:main",
                   ]
-              })
+      },
+      package_data={
+          "mop": ["*.ui"]
+      },
+      include_package_data=True,
+)
