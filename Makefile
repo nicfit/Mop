@@ -18,7 +18,9 @@ build:
 	./setup.py build
 
 Mop.desktop: Mop.desktop.in
-	sed "s|@mop_exec@|`command -v mop`|g" $< > $@
+	sed -e "s|@install_source@|`pwd`|g"\
+        -e "s|@mop_exec@|`command -v mop`|g"\
+        $< > $@
 	desktop-file-validate $@
 
 
@@ -59,9 +61,10 @@ test-dist: dist
 
 
 ### Install
-install: build Mop.desktop
+install: build install-desktop
 	./setup.py install
 
+install-desktop: Mop.desktop
 	@test -d ${desktopdir} || mkdir -p ${desktopdir}
 	desktop-file-install --dir=${desktopdir} Mop.desktop
 	update-desktop-database ${desktopdir}
