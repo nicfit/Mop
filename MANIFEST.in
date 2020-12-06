@@ -1,11 +1,1 @@
-include README.rst
-include AUTHORS.rst
-include HISTORY.rst
-include LICENSE
-include Makefile
-include tox.ini
-include mop/*.ui
-include screenshot.png
-include requirements.txt
-include data/Mop.desktop.in
 exclude data/MopFix.desktop.in

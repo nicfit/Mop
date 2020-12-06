@@ -14,7 +14,7 @@ classifiers = [
     "Topic :: Multimedia :: Sound/Audio :: Editors",
 ]
 keywords = ["mp3", "id3", "gtk", "eyed3", ""]
-include = ["README.rst", "AUTHORS.rst", "HISTORY.rst", "Makefile", "tox.ini",
+include = ["README.rst", "AUTHORS", "HISTORY.rst", "Makefile", "tox.ini",
            "poetry.lock", "requirements.txt", "MANIFEST.in",
            "data/Mop.desktop.in", "screenshot.png"]
 
