@@ -1,5 +1,4 @@
 import logging
-from functools import partial
 from eyed3 import core
 from eyed3.id3 import (
     ID3_V1_0, ID3_V1_1, ID3_V2_2, ID3_V2_3, ID3_V2_4, versionToString, Genre
@@ -388,5 +387,3 @@ class TagVersionChoiceWidget(EditorWidget):
 
     def _onDeepCopy(self, entry, icon_pos, button):
         raise NotImplementedError()
-
-

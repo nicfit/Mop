@@ -1,4 +1,3 @@
-include README.md
 include README.rst
 include AUTHORS.rst
 include HISTORY.rst
@@ -8,4 +7,5 @@ include tox.ini
 include mop/*.ui
 include screenshot.png
 include requirements.txt
-recursive-include data *.desktop.in
+include data/Mop.desktop.in
+exclude data/MopFix.desktop.in

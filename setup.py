@@ -24,7 +24,7 @@ if os.path.exists(readme_path):
 setup(
     long_description=readme,
     name='Mop',
-    version='0.2.0',
+    version='0.2.0-alpha.0',
     description='MPEG ID3 tagger using Python, eyeD3, and GTK+',
     python_requires='==3.*,>=3.8.0',
     project_urls={"documentation": "", "homepage": "https://github.com/nicfit/Mop", "repository": "https://github.com/nicfit/Mop"},
@@ -38,5 +38,5 @@ setup(
     package_dir={"": "."},
     package_data={"mop": ["*.ui"]},
     install_requires=['eyed3[art-plugin]>=0.9.5', 'nicfit.py>=0.8.6', 'pygobject>=3.38.0'],
-    extras_require={"dev": ["dephell==0.*,>=0.8.3", "pygobject-stubs>=0.0.2", "pytest==6.*,>=6.1.2", "tox==3.*,>=3.20.1", "twine==3.*,>=3.2.0", "wheel==0.*,>=0.36.1"]},
+    extras_require={"dev": ["check-manifest==0.*,>=0.45.0", "dephell==0.*,>=0.8.3", "pygobject-stubs>=0.0.2", "pytest==6.*,>=6.1.2", "regarding==0.*,>=0.1.2", "tox==3.*,>=3.20.1", "twine==3.*,>=3.2.0", "wheel==0.*,>=0.36.1"]},
 )

@@ -2,5 +2,4 @@
 .idea/
 __pycache__/
 *.egg-info/
-README.rst
 data/Mop.desktop

@@ -1,10 +1,10 @@
 [tool.poetry]
 name = "Mop"
-version = "0.2.0"
+version = "0.2.0-alpha.0"
 description = "MPEG ID3 tagger using Python, eyeD3, and GTK+"
 authors = ["Travis Shirk <travis@pobox.com>"]
 license = "GPL-3.0-or-later"
-readme = "README.md"
+readme = "README.rst"
 repository = "https://github.com/nicfit/Mop"
 homepage = "https://github.com/nicfit/Mop"
 documentation = ""
@@ -17,6 +17,10 @@ keywords = ["mp3", "id3", "gtk", "eyed3", ""]
 include = ["README.rst", "AUTHORS.rst", "HISTORY.rst", "Makefile", "tox.ini",
            "poetry.lock", "requirements.txt", "MANIFEST.in",
            "data/Mop.desktop.in", "screenshot.png"]
+
+[tool.regarding]
+release_name = "Poetry of Fire"
+years = "2020"
 
 [tool.poetry.scripts]
 mop = "mop.__main__:main"
@@ -34,6 +38,8 @@ pytest = "^6.1.2"
 dephell = "^0.8.3"
 wheel = "^0.36.1"
 twine = "^3.2.0"
+regarding = "^0.1.2"
+check-manifest = "^0.45"
 
 
 [tool.dephell]
