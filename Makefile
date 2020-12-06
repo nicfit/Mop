@@ -1,7 +1,7 @@
 PYTEST_ARGS ?=
 PYPI_REPO ?= pypitest
-PROJECT_NAME = $(shell ./setup.py --name 2> /dev/null)
-VERSION = $(shell ./setup.py --version 2> /dev/null)
+PROJECT_NAME = $(shell python ./setup.py --name 2> /dev/null)
+VERSION = $(shell python ./setup.py --version 2> /dev/null)
 RELEASE_TAG = v$(VERSION)
 RELEASE_NAME = $(shell python setup.py --release-name 2> /dev/null)
 CHANGELOG = HISTORY.rst
@@ -15,7 +15,7 @@ desktopdir = ${HOME}/.local/share/applications
 all: build
 
 build:
-	./setup.py build
+	python ./setup.py build
 
 %.desktop: %.desktop.in
 	sed -e "s|@install_source@|`pwd`|g"\
@@ -41,14 +41,18 @@ clean-test:
 
 
 ### Develop
-develop:
-	./setup.py develop
+setup.py: pyproject.toml poetry.lock
+	dephell deps convert --from-format poetry --from pyproject.toml \
+                         --to-format setuppy --to setup.py
+
+develop: setup.py
+	poetry install
 
 lint:
 	tox -e lint
 
 test:
-	tox -e default -- $(PYTEST_ARGS)
+	tox -- $(PYTEST_ARGS)
 
 test-all:
 	tox --parallel=all
@@ -62,7 +66,7 @@ test-dist: dist
 
 ### Install
 install: build install-desktop
-	./setup.py install
+	python ./setup.py install
 
 install-desktop: Mop.desktop MopFix.desktop
 	@test -d ${desktopdir} || mkdir -p ${desktopdir}
@@ -73,12 +77,12 @@ install-desktop: Mop.desktop MopFix.desktop
 
 
 ### Distribute
-sdist: build
-	./setup.py sdist --formats=gztar,zip
+sdist: build setup.py
+	python ./setup.py sdist --formats=gztar,zip
 
-bdist:
-	./setup.py bdist_egg
-	./setup.py bdist_wheel
+bdist: setup.py
+	python ./setup.py bdist_egg
+	python ./setup.py bdist_wheel
 
 dist: clean sdist bdist
 	@# The cd dist keeps the dist/ prefix out of the md5sum files
@@ -89,15 +93,18 @@ dist: clean sdist bdist
 	@ls -l dist
 
 requirements:
-	./parcyl.py requirements -RC
+	poetry update
+	poetry install
+	poetry export -f requirements.txt --output requirements.txt
 
 install-requirements:
-	pip install -r requirements/requirements.txt
+	poetry install --no-dev
 
 install-dev-requirements:
-	pip install -r requirements/dev.txt -r requirements/test.txt
+	poetry install
 
 pypi-release:
+	# FIXME: poetry publish
 	for f in `find dist -type f -name ${PROJECT_NAME}-${VERSION}.tar.gz \
               -o -name \*.egg -o -name \*.whl`; do \
         if test -f $$f ; then \
@@ -106,6 +113,7 @@ pypi-release:
 	done
 
 authors:
+	# FIXME: dephell generate authors ??
 	@IFS=$$'\n';\
 	for auth in `git authors --list | sed 's/.* <\(.*\)>/\1/' | grep -v users.noreply.github.com`; do \
 		echo "Checking $$auth...";\
