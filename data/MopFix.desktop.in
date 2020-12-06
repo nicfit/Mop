@@ -3,16 +3,15 @@
 Version=1.0
 Type=Application
 
-Name=Mop
-GenericName=ID3 tag editor
-Comment=GTK+ ID3 tag editor
-# XXX: muttiple instances run when $U is multi-file
-Exec=@exec_prefix@/mop %U
+Name=MopFixit
+GenericName=Album fixer
+Comment=Fix your albums Yo!
+Exec=/home/travis/devel/Mop/mop-fix.sh %f
 Icon=application-default-icon
-Terminal=false
+Terminal=true
 Categories=GTK;AudioVideo;Audio;AudioVideoEditing;
 Keywords=mp3;id3;music;audio;tag;
-MimeType=inode/directory;audio/mpeg;audio/mp3;
-StartupNotify=true
+MimeType=inode/directory
+StartupNotify=false
 
 # Source: @install_source@

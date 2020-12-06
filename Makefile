@@ -17,9 +17,9 @@ all: build
 build:
 	./setup.py build
 
-%.desktop: %.desktop.in
+data/%.desktop: data/%.desktop.in
 	sed -e "s|@install_source@|`pwd`|g"\
-        -e "s|@exec_prefix@|`dirname `command -v mop``|g"\
+        -e "s|@mop_exec@|`command -v mop`|g"\
         $< > $@
 	desktop-file-validate $@
 
@@ -28,8 +28,8 @@ build:
 clean: clean-dist clean-test
 	rm -rf ./build
 	find -type d -name __pycache__ | xargs -r rm -rf
-	rm -rf Mop.egg-info
-	-rm Mop.desktop
+	rm -rf {M,m}op.egg-info
+	-rm data/*.desktop
 
 clean-dist:
 	rm -rf ./dist
@@ -64,7 +64,7 @@ test-dist: dist
 install: build install-desktop
 	./setup.py install
 
-install-desktop: Mop.desktop MopFix.desktop
+install-desktop: data/Mop.desktop data/MopFix.desktop
 	@test -d ${desktopdir} || mkdir -p ${desktopdir}
 	for f in $?; do \
 		desktop-file-install --dir=${desktopdir} $${f}; \

@@ -1,0 +1,18 @@
+[Desktop Entry]
+# The version of the desktop entry specification to which this file complies
+Version=1.0
+Type=Application
+
+Name=Mop
+GenericName=ID3 tag editor
+Comment=GTK+ ID3 tag editor
+# XXX: multiple instances run when $U is multi-file
+Exec=@mop_exec@ %F
+Icon=application-default-icon
+Terminal=false
+Categories=GTK;AudioVideo;Audio;AudioVideoEditing;
+Keywords=mp3;id3;music;audio;tag;
+MimeType=inode/directory;audio/mpeg;audio/mp3;
+StartupNotify=true
+
+# Source: @install_source@
