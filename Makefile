@@ -2,20 +2,19 @@ PYTEST_ARGS ?=
 PYPI_REPO ?= pypitest
 PROJECT_NAME = $(shell python ./setup.py --name 2> /dev/null)
 VERSION = $(shell python ./setup.py --version 2> /dev/null)
+RELEASE_NAME = $(shell python ./setup.py --release-name 2> /dev/null)
 RELEASE_TAG = v$(VERSION)
-RELEASE_NAME = $(shell python setup.py --release-name 2> /dev/null)
 CHANGELOG = HISTORY.rst
 
 desktopdir = ${HOME}/.local/share/applications
 
-.PHONY: build dist requirements
+.PHONY: build dist
 
 
 ### Build
 all: build
 
-build:
-	python ./setup.py build
+build: setup.py
 
 %.desktop: %.desktop.in
 	sed -e "s|@install_source@|`pwd`|g"\
@@ -45,7 +44,7 @@ setup.py: pyproject.toml poetry.lock
 	dephell deps convert --from-format poetry --from pyproject.toml \
                          --to-format setuppy --to setup.py
 
-develop: setup.py
+develop:
 	poetry install
 
 lint:
@@ -66,7 +65,7 @@ test-dist: dist
 
 ### Install
 install: build install-desktop
-	python ./setup.py install
+	poetry insall --no-dev
 
 install-desktop: Mop.desktop MopFix.desktop
 	@test -d ${desktopdir} || mkdir -p ${desktopdir}
@@ -77,12 +76,11 @@ install-desktop: Mop.desktop MopFix.desktop
 
 
 ### Distribute
-sdist: build setup.py
-	python ./setup.py sdist --formats=gztar,zip
+sdist: build
+	poetry build --format sdist
 
-bdist: setup.py
-	python ./setup.py bdist_egg
-	python ./setup.py bdist_wheel
+bdist: build
+	poetry build --format wheel
 
 dist: clean sdist bdist
 	@# The cd dist keeps the dist/ prefix out of the md5sum files
@@ -93,8 +91,7 @@ dist: clean sdist bdist
 	@ls -l dist
 
 requirements:
-	poetry update
-	poetry install
+	poetry update --lock
 	poetry export -f requirements.txt --output requirements.txt
 
 install-requirements:
@@ -143,8 +140,10 @@ changelog:
 	touch $(CHANGELOG)
 
 pre-release: info clean\
-             requirements test test-dist check-manifest check-version-tag\
+             test test-dist check-manifest check-version-tag\
              authors changelog
+
+bump-release: requirements
 
 tag-release:
 	git tag -a $(RELEASE_TAG) -m "Release $(RELEASE_TAG)"
