@@ -5,7 +5,7 @@ from typing import Optional
 from eyed3 import version as eyeD3_version
 from gi import version_info as gtk_version_info
 from eyed3.id3 import (
-    ID3_V1_0, ID3_V1_1, ID3_V2_3, ID3_V2_4, ID3_ANY_VERSION, versionToString,
+    ID3_V1_0, ID3_V1_1, ID3_V2_3, ID3_V2_4, versionToString,
     LATIN1_ENCODING, UTF_8_ENCODING, UTF_16_ENCODING, UTF_16BE_ENCODING,
 )
 from pathlib import Path
@@ -122,7 +122,8 @@ class FileSaveDialog(Dialog):
                         v2_enc_combo.set_active(i)
                         break
             else:
-                # TODO: use default encoding preference if most_common is empty; based if off active version
+                # TODO: Use default encoding preference if most_common is empty; based if off
+                # TODO: active version
                 v2_enc_combo.set_active(0)
 
         initEncodings(v2_enc_combo, default_v2_version, default_v2_encoding)
@@ -191,10 +192,12 @@ class AboutDialog(Gtk.AboutDialog):
         self.set_website_label("GitHub")
         self.set_website("https://github.com/nicfit/Mop")
         # TODO:
-        #self.set_logo()
-        #self.set_artists()
-        #self.set_documentors()
-        #self.set_translator_credits()
+        '''
+        self.set_logo()
+        self.set_artists()
+        self.set_documentors()
+        self.set_translator_credits()
+        '''
 
 
 class FileChooserDialog(Dialog):
@@ -215,10 +218,12 @@ class FileChooserDialog(Dialog):
                 self._setAction(action)
 
         # FIXME: WIP
-        #audio_filter = Gtk.FileFilter()
-        #audio_filter.set_name("Audio Files")
-        #audio_filter.add_pattern("*.mp3")
-        #self._dialog.set_filter(audio_filter)
+        '''
+        audio_filter = Gtk.FileFilter()
+        audio_filter.set_name("Audio Files")
+        audio_filter.add_pattern("*.mp3")
+        self._dialog.set_filter(audio_filter)
+        '''
 
     def _setAction(self, action):
         if action == Gtk.FileChooserAction.SELECT_FOLDER:

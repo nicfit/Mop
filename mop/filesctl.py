@@ -57,7 +57,7 @@ class AudioFileListStore:
             tag.artist if tag else None,
             tag.album if tag else None,
             Pango.Weight.BOOK if not dirty else Pango.Weight.BOLD
-            ]
+        ]
 
     def updateRow(self, audio_file):
         row = self.getRow(audio_file)
@@ -182,4 +182,3 @@ class FileListControl(GObject.GObject):
 
         log.debug(f"File selection: {self._current}")
         self.emit("current-edit-changed")
-

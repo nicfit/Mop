@@ -1,12 +1,1 @@
-include README
-include AUTHORS.rst
-include HISTORY.rst
-include LICENSE
-include Makefile
-include tox.ini
-include parcyl.py
-include mop/*.ui
-include screenshot.png
-
-recursive-include requirements *.txt
-recursive-include data *.desktop
+exclude data/MopFix.desktop.in

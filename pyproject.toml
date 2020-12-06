@@ -1,0 +1,52 @@
+[tool.poetry]
+name = "Mop"
+version = "0.1.2-alpha.0"
+description = "MPEG ID3 tagger using Python, eyeD3, and GTK+"
+authors = ["Travis Shirk <travis@pobox.com>"]
+license = "GPL-3.0-or-later"
+readme = "README.rst"
+repository = "https://github.com/nicfit/Mop"
+homepage = "https://github.com/nicfit/Mop"
+documentation = ""
+classifiers = [
+    "Environment :: X11 Applications :: GTK",
+    "Intended Audience :: End Users/Desktop",
+    "Topic :: Multimedia :: Sound/Audio :: Editors",
+]
+keywords = ["mp3", "id3", "gtk", "eyed3", ""]
+include = ["README.rst", "AUTHORS", "HISTORY.rst", "Makefile", "tox.ini",
+           "poetry.lock", "requirements.txt", "MANIFEST.in",
+           "data/Mop.desktop.in", "screenshot.png"]
+
+[tool.regarding]
+release_name = "Poetry of Fire"
+years = "2020"
+
+[tool.poetry.scripts]
+mop = "mop.__main__:main"
+
+[tool.poetry.dependencies]
+python = "^3.8"
+PyGObject = ">=3.38.0"
+eyeD3 = {version = ">=0.9.5", extras = ["art-plugin"]}
+"nicfit.py" = ">=0.8.6"
+
+[tool.poetry.dev-dependencies]
+tox = "^3.20.1"
+PyGObject-stubs = ">=0.0.2"
+pytest = "^6.1.2"
+dephell = "^0.8.3"
+wheel = "^0.36.1"
+twine = "^3.2.0"
+regarding = "^0.1.2"
+check-manifest = "^0.45"
+
+
+[tool.dephell]
+[tool.dephell.main]
+from = {format = "poetry", path = "pyproject.toml"}
+to = {format = "setuppy", path = "setup.py"}
+
+[build-system]
+requires = ["poetry>=0.12"]
+build-backend = "poetry.masonry.api"
