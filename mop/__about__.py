@@ -16,13 +16,13 @@ class Version:
 
 
 project_name = "Mop"
-version = "0.2.0a0"
+version = "0.1.2a0"
 release_name = "Poetry of Fire"
 author = "Travis Shirk"
 author_email = "travis@pobox.com"
 years = "2020"
 version_info = Version(
-    0, 2, 0,
+    0, 1, 2,
     "a0", "Poetry of Fire"
 )
 description = "MPEG ID3 tagger using Python, eyeD3, and GTK+"

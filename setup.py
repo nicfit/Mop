@@ -24,7 +24,7 @@ if os.path.exists(readme_path):
 setup(
     long_description=readme,
     name='Mop',
-    version='0.2.0-alpha.0',
+    version='0.1.2-alpha.0',
     description='MPEG ID3 tagger using Python, eyeD3, and GTK+',
     python_requires='==3.*,>=3.8.0',
     project_urls={"documentation": "", "homepage": "https://github.com/nicfit/Mop", "repository": "https://github.com/nicfit/Mop"},

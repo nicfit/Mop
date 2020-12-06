@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "Mop"
-version = "0.2.0-alpha.0"
+version = "0.1.2-alpha.0"
 description = "MPEG ID3 tagger using Python, eyeD3, and GTK+"
 authors = ["Travis Shirk <travis@pobox.com>"]
 license = "GPL-3.0-or-later"

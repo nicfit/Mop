@@ -44,7 +44,7 @@ data/%.desktop: data/%.desktop.in
 
 # Note, this clean rule is NOT to be called as part of `clean`
 clean-autogen:
-	rm $(ABOUT_PY) setup.py
+	-rm $(ABOUT_PY) setup.py
 
 
 ## Clean
