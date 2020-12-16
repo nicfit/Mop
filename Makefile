@@ -1,9 +1,12 @@
+PROJECT_NAME = $(shell python ./setup.py --name 2> /dev/null)
+
+VERSION = $(shell python ./setup.py --version 2> /dev/null)
+# FIXME, not in setup any longer
+RELEASE_NAME = $(shell python ./setup.py --release-name 2> /dev/null)
+
 PYTEST_ARGS ?=
 PYPI_REPO ?= pypi
-
-PROJECT_NAME = $(shell python ./setup.py --name 2> /dev/null)
-VERSION = $(shell python ./setup.py --version 2> /dev/null)
-RELEASE_NAME = $(shell python ./setup.py --release-name 2> /dev/null)
+VENV_NAME ?= $(PROJECT_NAME)
 RELEASE_TAG = v$(VERSION)
 ABOUT_PY = mop/__about__.py
 CHANGELOG = HISTORY.rst
@@ -28,13 +31,11 @@ info:  ## Show project metadata
 .PHONY: build
 build: $(ABOUT_PY) setup.py  ## Build the project
 
-$(ABOUT_PY): pyproject.toml
-	python -m regarding -o $@
-	# Run again for bootstrapping new values
-	python -m regarding -o $@
-
 setup.py: pyproject.toml poetry.lock
 	dephell deps convert --from pyproject.toml --to setup.py
+
+$(ABOUT_PY): pyproject.toml
+	regarding -o $@
 
 data/%.desktop: data/%.desktop.in
 	sed -e "s|@install_source@|`pwd`|g"\
@@ -57,8 +58,9 @@ clean: clean-test clean-dist  ## Clean the project
 
 
 ## Test
+.PHONY: test
 test:  ## Run tests with default python
-	tox -e default -- $(PYTEST_ARGS)
+	tox -e py -- $(PYTEST_ARGS)
 
 test-all:  ## Run tests with all supported versions of Python
 	tox --parallel=all -- $(PYTEST_ARGS)
@@ -118,7 +120,7 @@ _pypi-release:
 install: build install-desktop  ## Install project and dependencies
 	poetry install --no-dev
 
-install-dev: build  ## Install projec, dependencies, and developer tools
+install-dev: build  ## Install project, dependencies, and developer tools
 	poetry install
 
 install-desktop: data/Mop.desktop data/MopFix.desktop
@@ -130,13 +132,17 @@ install-desktop: data/Mop.desktop data/MopFix.desktop
 
 
 ## Release
-release: pre-release _freeze-release test-all dist _tag-release _pypi-release
+release: pre-release _freeze-release test-all dist _tag-release upload-release
+
+upload-release: _pypi-release
 
 pre-release: clean-autogen build install-dev info _check-version-tag clean \
              test test-dist check-manifest authors changelog
+	@git status -s -b
 
 BUMP ?= prerelease
 bump-release: requirements
+	@# TODO: is not a pre-release, clear release_name
 	poetry version $(BUMP)
 
 requirements:
@@ -157,3 +163,15 @@ _tag-release:
 
 changelog:
 	@echo "FIXME: changelog target not yet implemented"
+
+## Runtime environment
+venv:
+	source /usr/bin/virtualenvwrapper.sh && \
+ 		mkvirtualenv $(VENV_NAME) && \
+ 		pip install -U pip && \
+		poetry install --no-dev
+
+clean-venv:
+	source /usr/bin/virtualenvwrapper.sh && \
+ 		rmvirtualenv $(VENV_NAME)
+

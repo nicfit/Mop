@@ -1,6 +1,10 @@
+[tool.regarding]
+release_name = "Poetry of Fire"
+years = "2020-2021"
+
 [tool.poetry]
 name = "Mop"
-version = "0.1.2-alpha.0"
+version = "0.1.2-alpha.1"
 description = "MPEG ID3 tagger using Python, eyeD3, and GTK+"
 authors = ["Travis Shirk <travis@pobox.com>"]
 license = "GPL-3.0-or-later"
@@ -17,10 +21,6 @@ keywords = ["mp3", "id3", "gtk", "eyed3", ""]
 include = ["README.rst", "AUTHORS", "HISTORY.rst", "Makefile", "tox.ini",
            "poetry.lock", "requirements.txt", "MANIFEST.in",
            "data/Mop.desktop.in", "screenshot.png"]
-
-[tool.regarding]
-release_name = "Poetry of Fire"
-years = "2020"
 
 [tool.poetry.scripts]
 mop = "mop.__main__:main"
