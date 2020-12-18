@@ -1,6 +1,4 @@
-PROJECT_NAME = $(shell python ./setup.py --name 2> /dev/null)
-
-VERSION = $(shell python ./setup.py --version 2> /dev/null)
+## User settings
 # FIXME, not in setup any longer
 RELEASE_NAME = $(shell python ./setup.py --release-name 2> /dev/null)
 
@@ -8,24 +6,22 @@ PYTEST_ARGS ?=
 PYPI_REPO ?= pypi
 VENV_NAME ?= $(PROJECT_NAME)
 RELEASE_TAG = v$(VERSION)
-ABOUT_PY = mop/__about__.py
 CHANGELOG = HISTORY.rst
 desktopdir = ${HOME}/.local/share/applications
+
+## Defaults
+help: ## List all commands
+	@printf "\n\033[33m***** [[ project_name ]] Makefile help *****\033[0m\n"
+	@# This code borrowed from https://github.com/jedie/poetry-publish/blob/master/Makefile
+	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z0-9 -]+:.*?## / {printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}' $(MAKEFILE_LIST)
 
 all: build test  ## Build and test
 
 
-# Meta
-help: ## List all commands
-	@# This code borrowed from https://github.com/jedie/poetry-publish/blob/master/Makefile
-	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z0-9 -]+:.*?## / {printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}' $(MAKEFILE_LIST)
-
-info:  ## Show project metadata
-	@echo "VERSION: $(VERSION)"
-	@echo "RELEASE_TAG: $(RELEASE_TAG)"
-	@echo "RELEASE_NAME: $(RELEASE_NAME)"
-	poetry show
-
+## Config
+PROJECT_NAME = $(shell python ./setup.py --name 2> /dev/null)
+VERSION = $(shell python ./setup.py --version 2> /dev/null)
+ABOUT_PY = mop/__about__.py
 
 ## Build
 .PHONY: build
@@ -102,6 +98,13 @@ clean-dist:  ## Clean distribution artifacts (included in `clean`)
 
 check-manifest:
 	check-manifest
+
+## Meta
+info:  ## Show project metadata
+	@echo "VERSION: $(VERSION)"
+	@echo "RELEASE_TAG: $(RELEASE_TAG)"
+	@echo "RELEASE_NAME: $(RELEASE_NAME)"
+	poetry show
 
 _check-version-tag:
 	@if git tag -l | grep -E '^$(shell echo ${RELEASE_TAG} | sed 's|\.|.|g')$$' > /dev/null; then \
