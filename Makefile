@@ -1,27 +1,42 @@
 ## User settings
-# FIXME, not in setup any longer
-RELEASE_NAME = $(shell python ./setup.py --release-name 2> /dev/null)
-
 PYTEST_ARGS ?=
 PYPI_REPO ?= pypi
-VENV_NAME ?= $(PROJECT_NAME)
-RELEASE_TAG = v$(VERSION)
-CHANGELOG = HISTORY.rst
-desktopdir = ${HOME}/.local/share/applications
+BUMP ?= prerelease
+
+ifdef TERM
+BOLD_COLOR = $(shell tput bold)
+HELP_COLOR = $(shell tput setaf 6)
+HEADER_COLOR = $(BOLD_COLOR)$(shell tput setaf 2)
+NO_COLOR = $(shell tput sgr0)
+endif
 
 ## Defaults
-help: ## List all commands
-	@printf "\n\033[33m***** [[ project_name ]] Makefile help *****\033[0m\n"
+
+help:  ## List all commands
+	@printf "\n$(BOLD_COLOR)***** eyeD3 Makefile help *****$(NO_COLOR)\n"
 	@# This code borrowed from https://github.com/jedie/poetry-publish/blob/master/Makefile
-	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z0-9 -]+:.*?## / {printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}' $(MAKEFILE_LIST)
+	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z0-9 -]+:.*?## / {printf "$(HELP_COLOR)%-20s$(NO_COLOR) %s\n", $$1, $$2}' $(MAKEFILE_LIST)
+	@echo ""
+	@printf "$(BOLD_COLOR)Options:$(NO_COLOR)\n"
+	@printf "$(HELP_COLOR)%-20s$(NO_COLOR) %s\n" PYTEST_ARGS "If defined PDB options are added when 'pytest' is invoked"
+	@printf "$(HELP_COLOR)%-20s$(NO_COLOR) %s\n" PYPI_REPO "The package index to publish, 'pypi' by default."
+	@printf "$(HELP_COLOR)%-20s$(NO_COLOR) %s\n" BROWSER "HTML viewer used by docs-view/coverage-view"
+	@printf "$(HELP_COLOR)%-20s$(NO_COLOR) %s\n" CC_MERGE "Set to no to disable cookiecutter merging."
+	@printf "$(HELP_COLOR)%-20s$(NO_COLOR) %s\n" CC_OPTS "OVerrided the default options (--no-input) with your own."
+	@echo ""
+
 
 all: build test  ## Build and test
 
 
 ## Config
-PROJECT_NAME = $(shell python ./setup.py --name 2> /dev/null)
-VERSION = $(shell python ./setup.py --version 2> /dev/null)
+PROJECT_NAME = $(shell python setup.py --name 2> /dev/null)
+VERSION = $(shell python setup.py --version 2> /dev/null)
 ABOUT_PY = mop/__about__.py
+VENV_NAME ?= $(PROJECT_NAME)
+RELEASE_TAG = v$(VERSION)
+CHANGELOG = HISTORY.rst
+desktopdir = ${HOME}/.local/share/applications
 
 ## Build
 .PHONY: build
@@ -143,11 +158,11 @@ pre-release: clean-autogen build install-dev info _check-version-tag clean \
              test test-dist check-manifest authors changelog
 	@git status -s -b
 
-BUMP ?= prerelease
 bump-release: requirements
 	@# TODO: is not a pre-release, clear release_name
 	poetry version $(BUMP)
 
+.PHONY: requirements
 requirements:
 	poetry show --outdated
 	poetry update --lock
