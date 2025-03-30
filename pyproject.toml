@@ -11,7 +11,6 @@ license = "GPL-3.0-or-later"
 readme = "README.rst"
 repository = "https://github.com/nicfit/Mop"
 homepage = "https://github.com/nicfit/Mop"
-documentation = ""
 classifiers = [
     "Environment :: X11 Applications :: GTK",
     "Intended Audience :: End Users/Desktop",

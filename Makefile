@@ -187,7 +187,7 @@ venv:
 	source /usr/bin/virtualenvwrapper.sh && \
  		mkvirtualenv $(VENV_NAME) && \
  		pip install -U pip && \
-		poetry install --no-dev
+		poetry install
 
 clean-venv:
 	source /usr/bin/virtualenvwrapper.sh && \
